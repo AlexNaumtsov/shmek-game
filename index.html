@@ -3,216 +3,631 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHMEK Grower Game</title>
+    <title>SHMEK Grower | Premium Cannabis Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
+        :root {
+            --primary: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-dark: #1b5e20;
+            --secondary: #7cb342;
+            --accent: #ffc107;
+            --dark: #263238;
+            --light: #f5f5f5;
+            --danger: #f44336;
+            --success: #8bc34a;
+            --warning: #ff9800;
+            --info: #29b6f6;
+            --background: #121212;
+            --card-bg: rgba(48, 48, 48, 0.85);
+            --border-radius: 12px;
+            --shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(to bottom, #1a6c25, #134d1c);
-            color: white;
-            height: 100vh;
-            user-select: none;
-            overflow: hidden;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: var(--background);
+            color: var(--light);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M50,75 C40,60 35,40 50,25 C65,40 60,60 50,75 Z" fill="%23388e3c" opacity="0.05"/></svg>'), 
+                        linear-gradient(135deg, #1a237e 0%, #311b92 100%);
+            background-size: 200px, cover;
+            opacity: 0.8;
+            z-index: -1;
         }
         
         #game-container {
-            max-width: 600px;
+            max-width: 100%;
+            width: 500px;
             margin: 0 auto;
-            padding: 10px;
-            height: 100%;
+            padding: 16px;
+            height: 100vh;
             display: flex;
             flex-direction: column;
+            position: relative;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            backdrop-filter: blur(8px);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         #header {
             text-align: center;
-            padding: 10px;
-            background-color: rgba(0, 0, 0, 0.4);
-            border-radius: 10px;
+            padding: 16px;
+            position: relative;
+            margin-bottom: 16px;
+        }
+        
+        #header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, var(--accent), #ff6f00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        #header .subtitle {
+            font-size: 1rem;
+            opacity: 0.8;
             margin-bottom: 10px;
         }
         
+        #level-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border-radius: 20px;
+            font-weight: 600;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+            letter-spacing: 0.5px;
+        }
+        
         #resources {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px;
-            background-color: rgba(0, 0, 0, 0.4);
-            border-radius: 10px;
-            margin-bottom: 10px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding: 8px;
+        }
+        
+        .resource-card {
+            padding: 12px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: calc(var(--border-radius) / 2);
+            transition: var(--transition);
+        }
+        
+        .resource-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .resource-icon {
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+        
+        .resource-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--light);
+        }
+        
+        .resource-label {
+            font-size: 0.8rem;
+            opacity: 0.7;
         }
         
         #grow-area {
             flex: 1;
-            background-color: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            margin-bottom: 10px;
-            overflow: hidden;
             position: relative;
+            border-radius: var(--border-radius);
+            margin-bottom: 16px;
+            overflow: hidden;
+            min-height: 280px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Soil background for grow area */
+        #grow-area::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 30px;
+            background: #3e2723;
+            background-image: 
+                radial-gradient(circle, rgba(62, 39, 35, 0.8) 15%, transparent 15%),
+                radial-gradient(circle, rgba(62, 39, 35, 0.8) 15%, transparent 15%);
+            background-size: 10px 10px;
+            background-position: 0 0, 5px 5px;
+            z-index: 1;
         }
         
         .plant-container {
             position: absolute;
             width: 80px;
-            height: 120px;
+            height: 160px;
             transform: translateX(-50%);
+            z-index: 2;
         }
         
         .plant {
             position: absolute;
-            bottom: 0;
+            bottom: 30px;
             width: 100%;
-            height: 0;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200"><path d="M50,200 Q30,150 50,100 Q70,150 50,200" fill="%2367a832"/><path d="M50,100 Q30,70 40,40 Q50,60 60,40 Q70,70 50,100" fill="%2367a832"/><path d="M50,40 Q40,20 45,0 Q50,10 55,0 Q60,20 50,40" fill="%2367a832"/></svg>');
-            background-repeat: no-repeat;
-            background-position: bottom;
-            background-size: contain;
+            height: 0%;
             transition: height 0.5s ease-out;
+            overflow: visible;
+        }
+        
+        /* SVG plant structure using filters for better appearance */
+        .plant svg {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        
+        .plant.premium svg {
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)) hue-rotate(25deg) saturate(1.5);
         }
         
         .pot {
             position: absolute;
             bottom: 0;
+            width: 60px;
+            height: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+        }
+        
+        .pot svg {
             width: 100%;
-            height: 20px;
-            background-color: #8B4513;
-            border-radius: 0 0 10px 10px;
+            height: 100%;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
         }
         
         .growth-indicator {
             position: absolute;
-            bottom: 25px;
+            bottom: 40px;
             left: 50%;
             transform: translateX(-50%);
-            width: 40px;
-            height: 5px;
-            background-color: rgba(255, 255, 255, 0.3);
-            border-radius: 5px;
+            width: 50px;
+            height: 6px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+            overflow: hidden;
+            z-index: 3;
         }
         
         .growth-progress {
             height: 100%;
             width: 0%;
-            background-color: #4CAF50;
-            border-radius: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 4px;
             transition: width 0.3s;
+        }
+        
+        /* Notification when plant is ready */
+        .plant-ready {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: var(--dark);
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 4;
+        }
+        
+        .plant-container.ready .plant-ready {
+            opacity: 1;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+            100% { transform: translateX(-50%) scale(1); }
         }
         
         #actions {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 10px;
+            gap: 12px;
+            margin-bottom: 16px;
         }
         
         .btn {
-            padding: 12px;
-            background-color: #4CAF50;
-            color: white;
+            padding: 16px;
+            background: linear-gradient(45deg, var(--primary-dark), var(--primary));
+            color: var(--light);
             border: none;
-            border-radius: 8px;
+            border-radius: var(--border-radius);
             cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
         
         .btn:hover {
-            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(45deg, var(--primary), var(--primary-light));
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         
         .btn:disabled {
-            background-color: #cccccc;
+            background: linear-gradient(45deg, #9e9e9e, #616161);
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            opacity: 0.7;
         }
         
+        .btn span {
+            margin-left: 8px;
+        }
+        
+        .btn-harvest {
+            background: linear-gradient(45deg, #ffa000, var(--accent));
+        }
+        
+        .btn-harvest:hover {
+            background: linear-gradient(45deg, var(--accent), #ffca28);
+        }
+        
+        .btn-water {
+            background: linear-gradient(45deg, #0277bd, #29b6f6);
+        }
+        
+        .btn-water:hover {
+            background: linear-gradient(45deg, #29b6f6, #81d4fa);
+        }
+        
+        .btn-shop {
+            background: linear-gradient(45deg, #6a1b9a, #9c27b0);
+        }
+        
+        .btn-shop:hover {
+            background: linear-gradient(45deg, #9c27b0, #ba68c8);
+        }
+        
+        .btn-upgrade {
+            background: linear-gradient(45deg, #c62828, #f44336);
+        }
+        
+        .btn-upgrade:hover {
+            background: linear-gradient(45deg, #f44336, #ef5350);
+        }
+        
+        /* Shop panel */
         #shop {
-            background-color: rgba(0, 0, 0, 0.4);
-            border-radius: 10px;
-            padding: 10px;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            background: rgba(48, 48, 48, 0.97);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            transform: translateY(100%);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: none;
-            margin-bottom: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            height: 80vh;
+            overflow-y: auto;
         }
         
-        #shop h3 {
-            margin-top: 0;
+        #shop.active {
+            transform: translateY(0);
+            display: block;
         }
         
-        .shop-item {
+        #shop-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 5px;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         
+        #shop-header h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+        
+        .shop-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--light);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .shop-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .shop-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            transition: var(--transition);
+        }
+        
+        .shop-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .shop-item-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 16px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        .shop-item-info {
+            flex: 1;
+        }
+        
+        .shop-item-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .shop-item-desc {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        
+        .shop-item-price {
+            background: linear-gradient(45deg, var(--accent), #ff8f00);
+            color: var(--dark);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .shop-item-price span {
+            margin-left: 4px;
+        }
+        
+        .shop-item-btn {
+            padding: 8px 16px;
+            background: linear-gradient(45deg, var(--primary-dark), var(--primary));
+            color: var(--light);
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        
+        .shop-item-btn:hover {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+        }
+        
+        /* Notifications */
         #notifications {
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            width: 80%;
-            max-width: 300px;
-            z-index: 100;
+            width: 90%;
+            max-width: 400px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
         }
         
         .notification {
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 10px;
-            margin-bottom: 5px;
-            border-radius: 5px;
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            color: var(--light);
+            padding: 12px 20px;
+            margin-bottom: 8px;
+            border-radius: var(--border-radius);
             text-align: center;
-            animation: fadeIn 0.3s, fadeOut 0.3s 2.7s;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary);
+            width: 100%;
+            max-width: 100%;
+            transform: translateY(100px);
             opacity: 0;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                         opacity 0.3s ease;
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        .notification.success {
+            border-left-color: var(--success);
         }
         
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
+        .notification.warning {
+            border-left-color: var(--warning);
+        }
+        
+        .notification.error {
+            border-left-color: var(--danger);
+        }
+        
+        .notification.info {
+            border-left-color: var(--info);
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
         }
         
         /* Game effects */
+        .water-effect {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 50;
+        }
+        
         .water-droplet {
             position: absolute;
-            width: 10px;
-            height: 15px;
-            background-color: #4fc3f7;
+            width: 8px;
+            height: 12px;
+            background: linear-gradient(180deg, #29b6f6, #0288d1);
             border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-            animation: dropWater 1s linear;
+            filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.2));
+            animation: dropWater 1.5s linear;
         }
         
         @keyframes dropWater {
-            0% { transform: translateY(-20px); opacity: 0; }
-            10% { opacity: 1; }
-            100% { transform: translateY(60px); opacity: 0; }
+            0% { 
+                transform: translateY(-20px) scale(0.8); 
+                opacity: 0; 
+            }
+            10% { 
+                transform: translateY(-15px) scale(1);
+                opacity: 1; 
+            }
+            70% {
+                opacity: 1;
+            }
+            100% { 
+                transform: translateY(80px) scale(0.5); 
+                opacity: 0; 
+            }
         }
         
         .coin {
             position: absolute;
-            width: 20px;
-            height: 20px;
-            background-color: #FFD700;
-            border-radius: 50%;
+            width: 30px;
+            height: 30px;
             display: flex;
-            justify-content: center;
             align-items: center;
-            font-weight: bold;
-            font-size: 12px;
-            color: #333;
-            animation: collectCoin 0.8s ease-out;
+            justify-content: center;
             z-index: 10;
+            filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.3));
+            pointer-events: none;
+        }
+        
+        .coin::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #ffc107, #ff8f00);
+            border-radius: 50%;
+            z-index: -1;
+        }
+        
+        .coin::after {
+            content: '$';
+            font-weight: 700;
+            color: rgba(0, 0, 0, 0.7);
+            font-size: 16px;
+        }
+        
+        .coin-text {
+            position: absolute;
+            color: white;
+            font-weight: 700;
+            font-size: 12px;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
         }
         
         @keyframes collectCoin {
-            0% { transform: translate(0, 0) scale(1); opacity: 1; }
-            100% { transform: translate(0, -50px) scale(0.5); opacity: 0; }
+            0% { 
+                transform: translate(0, 0) scale(1); 
+                opacity: 1; 
+            }
+            100% { 
+                transform: translate(0, -80px) scale(0.3); 
+                opacity: 0; 
+            }
         }
         
+        /* Level up overlay */
         #level-up {
             position: fixed;
             top: 0;
@@ -230,12 +645,15 @@
         }
         
         .level-up-content {
-            background-color: #4CAF50;
-            padding: 20px;
-            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            padding: 30px;
+            border-radius: var(--border-radius);
             text-align: center;
             transform: scale(0.8);
-            transition: transform 0.5s;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         #level-up.active {
@@ -246,60 +664,231 @@
         #level-up.active .level-up-content {
             transform: scale(1);
         }
+        
+        .level-up-content h2 {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            background: linear-gradient(45deg, var(--accent), #ff6f00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .level-up-content h2::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(45deg, var(--accent), #ff6f00);
+            border-radius: 3px;
+        }
+        
+        .level-up-content p {
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        
+        .level-up-content .level-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .level-up-content .benefits {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 16px;
+            border-radius: var(--border-radius);
+            margin: 20px 0;
+        }
+        
+        .level-up-content .benefits p {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .level-up-content .benefits p::before {
+            content: '✓';
+            margin-right: 8px;
+            color: var(--success);
+            font-weight: 700;
+        }
+        
+        .level-up-continue {
+            padding: 12px 30px;
+            background: linear-gradient(45deg, var(--accent), #ff8f00);
+            color: var(--dark);
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: var(--transition);
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .level-up-continue:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+        }
+        
+        .level-up-continue:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Special confetti effects for level up */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--accent);
+            opacity: 0.8;
+            z-index: 1001;
+            pointer-events: none;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 500px) {
+            #game-container {
+                padding: 10px;
+            }
+            
+            #header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .resource-icon {
+                font-size: 1.2rem;
+            }
+            
+            .resource-value {
+                font-size: 1rem;
+            }
+            
+            .btn {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+            
+            .level-up-content {
+                padding: 20px;
+            }
+            
+            .level-up-content h2 {
+                font-size: 2rem;
+            }
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
         <div id="header">
-            <h1>SHMEK Grower</h1>
-            <div>Level: <span id="level">1</span></div>
+            <h1>SHMEK GROWER</h1>
+            <div class="subtitle">Premium Cannabis Game</div>
+            <div id="level-badge">Level <span id="level">1</span></div>
         </div>
         
-        <div id="resources">
-            <div>💰 <span id="coins">420</span> SHMEK</div>
-            <div>🌱 Plants: <span id="plants">1</span>/5</div>
-            <div>💧 Water: <span id="water">10</span></div>
+        <div class="card">
+            <div id="resources">
+                <div class="resource-card">
+                    <div class="resource-icon">💰</div>
+                    <div class="resource-value"><span id="coins">420</span></div>
+                    <div class="resource-label">SHMEK Coins</div>
+                </div>
+                <div class="resource-card">
+                    <div class="resource-icon">🌱</div>
+                    <div class="resource-value"><span id="plants">1</span>/<span id="max-plants">5</span></div>
+                    <div class="resource-label">Plants</div>
+                </div>
+                <div class="resource-card">
+                    <div class="resource-icon">💧</div>
+                    <div class="resource-value"><span id="water">10</span></div>
+                    <div class="resource-label">Water</div>
+                </div>
+            </div>
         </div>
         
         <div id="grow-area">
             <!-- Plants will be added here dynamically -->
+            <div class="water-effect"></div>
         </div>
         
         <div id="actions">
-            <button id="water-btn" class="btn">💧 Water Plants</button>
-            <button id="harvest-btn" class="btn">🌿 Harvest</button>
-            <button id="shop-btn" class="btn">🛒 Shop</button>
-            <button id="upgrade-btn" class="btn">⬆️ Upgrade</button>
-        </div>
-        
-        <div id="shop">
-            <h3>SHMEK Market</h3>
-            <div class="shop-item">
-                <span>🌱 New Plant (100 SHMEK)</span>
-                <button id="buy-plant" class="btn">Buy</button>
-            </div>
-            <div class="shop-item">
-                <span>💧 Water x10 (50 SHMEK)</span>
-                <button id="buy-water" class="btn">Buy</button>
-            </div>
-            <div class="shop-item">
-                <span>🧬 Premium Strain (200 SHMEK)</span>
-                <button id="buy-strain" class="btn">Buy</button>
-            </div>
-            <div class="shop-item">
-                <button id="close-shop" class="btn">Close Shop</button>
-            </div>
+            <button id="water-btn" class="btn btn-water">
+                💧 <span>Water Plants</span>
+            </button>
+            <button id="harvest-btn" class="btn btn-harvest" disabled>
+                🌿 <span>Harvest</span>
+            </button>
+            <button id="shop-btn" class="btn btn-shop">
+                🛒 <span>Shop</span>
+            </button>
+            <button id="upgrade-btn" class="btn btn-upgrade">
+                ⬆️ <span>Upgrade (500)</span>
+            </button>
         </div>
     </div>
     
-    <div id="notifications"></div>
+    <div id="shop">
+        <div id="shop-header">
+            <h3>SHMEK Market</h3>
+            <button id="close-shop" class="shop-close">✕</button>
+        </div>
+        
+        <div class="shop-item">
+            <div class="shop-item-icon">🌱</div>
+            <div class="shop-item-info">
+                <div class="shop-item-title">New Plant</div>
+                <div class="shop-item-desc">Add a new plant to your garden</div>
+            </div>
+            <div class="shop-item-price">100 <span>💰</span></div>
+            <button id="buy-plant" class="shop-item-btn">Buy</button>
+        </div>
+        
+        <div class="shop-item">
+            <div class="shop-item-icon">💧</div>
+            <div class="shop-item-info">
+                <div class="shop-item-title">Water Pack</div>
+                <div class="shop-item-desc">Refill with 10 water units</div>
+            </div>
+            <div class="shop-item-price">50 <span>💰</span></div>
+            <button id="buy-water" class="shop-item-btn">Buy</button>
+        </div>
+        
+        <div class="shop-item">
+            <div class="shop-item-icon">🧬</div>
+            <div class="shop-item-info">
+                <div class="shop-item-title">Premium Strain</div>
+                <div class="shop-item-desc">Upgrade a plant to premium quality (1.5x yield)</div>
+            </div>
+            <div class="shop-item-price">200 <span>💰</span></div>
+            <button id="buy-strain" class="shop-item-btn">Buy</button>
+        </div>
+    </div>
+    
+    <div id="notifications">
+        <!-- Notifications will be added here dynamically -->
+    </div>
     
     <div id="level-up">
         <div class="level-up-content">
             <h2>LEVEL UP!</h2>
-            <p>You advanced to level <span id="new-level">2</span>!</p>
-            <p>Your plants now grow faster!</p>
-            <button id="level-up-continue" class="btn">Continue</button>
+            <p>You advanced to level <span id="new-level" class="level-number">2</span>!</p>
+            
+            <div class="benefits">
+                <p>Plants grow 20% faster</p>
+                <p>Increased plant capacity</p>
+                <p>Better harvest yield</p>
+            </div>
+            
+            <button id="level-up-continue" class="level-up-continue">Continue</button>
         </div>
     </div>
     
@@ -320,18 +909,20 @@
         // DOM elements
         const coinsEl = document.getElementById('coins');
         const plantsEl = document.getElementById('plants');
+        const maxPlantsEl = document.getElementById('max-plants');
         const waterEl = document.getElementById('water');
         const levelEl = document.getElementById('level');
         const growAreaEl = document.getElementById('grow-area');
+        const waterEffectEl = document.querySelector('.water-effect');
         const waterBtn = document.getElementById('water-btn');
         const harvestBtn = document.getElementById('harvest-btn');
         const shopBtn = document.getElementById('shop-btn');
         const upgradeBtn = document.getElementById('upgrade-btn');
         const shopEl = document.getElementById('shop');
+        const closeShopBtn = document.getElementById('close-shop');
         const buyPlantBtn = document.getElementById('buy-plant');
         const buyWaterBtn = document.getElementById('buy-water');
         const buyStrainBtn = document.getElementById('buy-strain');
-        const closeShopBtn = document.getElementById('close-shop');
         const levelUpEl = document.getElementById('level-up');
         const newLevelEl = document.getElementById('new-level');
         const levelUpContinueBtn = document.getElementById('level-up-continue');
@@ -355,6 +946,47 @@
             
             // Check if we need to load saved game
             loadGame();
+            
+            // Welcome notification
+            showNotification('Welcome to SHMEK Grower!', 'info');
+        }
+        
+        // Create SVG for a plant
+        function createPlantSVG(isPremium = false) {
+            const color = isPremium ? '#8BC34A' : '#4CAF50';
+            const stemColor = isPremium ? '#7CB342' : '#388E3C';
+            
+            return `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 160" width="100%" height="100%">
+                    <!-- Stem -->
+                    <path d="M50,160 Q40,120 50,80 Q60,120 50,160" fill="${stemColor}" />
+                    
+                    <!-- Lower leaves -->
+                    <path d="M50,80 Q25,60 20,30 Q30,50 50,70 Q70,50 80,30 Q75,60 50,80" fill="${color}" />
+                    
+                    <!-- Upper leaves -->
+                    <path d="M50,70 Q35,40 40,10 Q45,30 50,40 Q55,30 60,10 Q65,40 50,70" fill="${color}" />
+                    
+                    <!-- Top leaves -->
+                    <path d="M50,40 Q40,20 38,5 Q45,15 50,18 Q55,15 62,5 Q60,20 50,40" fill="${color}" />
+                </svg>
+            `;
+        }
+        
+        // Create SVG for a pot
+        function createPotSVG() {
+            return `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 35" width="100%" height="100%">
+                    <!-- Pot -->
+                    <path d="M5,0 C5,0 0,5 0,10 L0,30 C0,33 3,35 5,35 L55,35 C57,35 60,33 60,30 L60,10 C60,5 55,0 55,0 Z" fill="#795548" />
+                    
+                    <!-- Pot highlights -->
+                    <path d="M5,0 L55,0 C55,0 60,5 60,10 L58,10 C58,7 55,2 55,2 L5,2 C5,2 2,7 2,10 L0,10 C0,5 5,0 5,0 Z" fill="#8D6E63" />
+                    
+                    <!-- Pot rim -->
+                    <rect x="1" y="7" width="58" height="3" rx="1" fill="#6D4C41" />
+                </svg>
+            `;
         }
         
         // Create initial plants
@@ -374,26 +1006,46 @@
         
         // Render plants in the grow area
         function renderPlants() {
-            growAreaEl.innerHTML = '';
+            // Clear existing plants
+            const existingPlants = growAreaEl.querySelectorAll('.plant-container');
+            existingPlants.forEach(plant => {
+                if (!plant.classList.contains('being-removed')) {
+                    plant.remove();
+                }
+            });
             
+            // Calculate space between plants based on available width
+            const areaWidth = growAreaEl.clientWidth;
+            const spacing = areaWidth / Math.max(gameState.plantsData.length, gameState.maxPlants);
+            
+            // Add plants
             gameState.plantsData.forEach((plant, index) => {
-                const plantWidth = growAreaEl.clientWidth / gameState.maxPlants;
-                const position = (index + 0.5) * plantWidth;
-                
                 const plantContainer = document.createElement('div');
                 plantContainer.className = 'plant-container';
-                plantContainer.style.left = position + 'px';
                 
-                const plantElement = document.createElement('div');
-                plantElement.className = 'plant';
-                plantElement.style.height = (plant.growth * 100) + '%';
-                if (plant.premium) {
-                    plantElement.style.filter = 'hue-rotate(60deg) saturate(1.5)';
+                if (plant.ready) {
+                    plantContainer.classList.add('ready');
                 }
                 
+                // Calculate position with proper spacing
+                const position = (index + 0.5) * spacing;
+                plantContainer.style.left = position + 'px';
+                
+                // Create plant with SVG
+                const plantElement = document.createElement('div');
+                plantElement.className = 'plant';
+                if (plant.premium) {
+                    plantElement.classList.add('premium');
+                }
+                plantElement.style.height = (plant.growth * 100) + '%';
+                plantElement.innerHTML = createPlantSVG(plant.premium);
+                
+                // Create pot with SVG
                 const potElement = document.createElement('div');
                 potElement.className = 'pot';
+                potElement.innerHTML = createPotSVG();
                 
+                // Create growth indicator
                 const growthIndicator = document.createElement('div');
                 growthIndicator.className = 'growth-indicator';
                 
@@ -401,10 +1053,18 @@
                 growthProgress.className = 'growth-progress';
                 growthProgress.style.width = (plant.growth * 100) + '%';
                 
+                // Create ready notification
+                const plantReady = document.createElement('div');
+                plantReady.className = 'plant-ready';
+                plantReady.textContent = 'Ready!';
+                
+                // Assemble plant container
                 growthIndicator.appendChild(growthProgress);
                 plantContainer.appendChild(plantElement);
                 plantContainer.appendChild(potElement);
                 plantContainer.appendChild(growthIndicator);
+                plantContainer.appendChild(plantReady);
+                
                 growAreaEl.appendChild(plantContainer);
             });
         }
@@ -416,40 +1076,69 @@
                 
                 gameState.plantsData.forEach(plant => {
                     if (!plant.ready) {
-                        const growthIncrement = 1 / (gameState.harvestTime * 10) * gameState.growthRate;
+                        // Calculate growth rate based on game level and premium status
+                        const growthMultiplier = plant.premium ? 1.2 : 1;
+                        const growthIncrement = 1 / (gameState.harvestTime * 10) * gameState.growthRate * growthMultiplier;
                         plant.growth += growthIncrement;
                         
                         if (plant.growth >= 1) {
                             plant.growth = 1;
                             plant.ready = true;
-                            showNotification("A plant is ready to harvest!");
+                            showNotification('A plant is ready to harvest!', 'success');
                         } else {
                             allReady = false;
                         }
                     }
                 });
                 
-                renderPlants();
+                // Update the UI for growth without completely re-rendering plants
+                updatePlantGrowth();
                 
-                // Enable harvest button if any plants are ready
+                // Enable/disable harvest button
                 harvestBtn.disabled = !gameState.plantsData.some(p => p.ready);
                 
-                // Save game state every minute
+                // Save game state periodically (around once a minute)
                 if (Math.random() < 0.01) {
                     saveGame();
                 }
             }, 100);
         }
         
+        // Update plant growth without re-rendering all plants
+        function updatePlantGrowth() {
+            const plantContainers = growAreaEl.querySelectorAll('.plant-container');
+            
+            gameState.plantsData.forEach((plant, index) => {
+                if (index < plantContainers.length) {
+                    const container = plantContainers[index];
+                    const plantElement = container.querySelector('.plant');
+                    const growthProgress = container.querySelector('.growth-progress');
+                    
+                    // Update plant height
+                    plantElement.style.height = (plant.growth * 100) + '%';
+                    
+                    // Update growth indicator
+                    growthProgress.style.width = (plant.growth * 100) + '%';
+                    
+                    // Toggle ready class
+                    if (plant.ready) {
+                        container.classList.add('ready');
+                    } else {
+                        container.classList.remove('ready');
+                    }
+                }
+            });
+        }
+        
         // Water plants
         function waterPlants() {
             if (gameState.water <= 0) {
-                showNotification("Not enough water!");
+                showNotification('Not enough water!', 'error');
                 return;
             }
             
             if (gameState.plantsData.every(p => p.ready)) {
-                showNotification("All plants are ready to harvest!");
+                showNotification('All plants are ready to harvest!', 'warning');
                 return;
             }
             
@@ -467,29 +1156,49 @@
                 }
             });
             
-            renderPlants();
+            // Update plant growth
+            updatePlantGrowth();
+            
+            // Create water droplet effect
             createWaterEffect();
             
             // Enable harvest button if any plants are ready
             harvestBtn.disabled = !gameState.plantsData.some(p => p.ready);
+            
+            // Disable water button if no water left
+            waterBtn.disabled = gameState.water <= 0;
+            
+            showNotification('Plants watered!', 'info');
         }
         
         // Create water effect
         function createWaterEffect() {
-            for (let i = 0; i < 10; i++) {
+            // Clear any existing droplets
+            waterEffectEl.innerHTML = '';
+            
+            // Create multiple water droplets
+            for (let i = 0; i < 20; i++) {
                 setTimeout(() => {
                     const droplet = document.createElement('div');
                     droplet.className = 'water-droplet';
-                    droplet.style.left = (Math.random() * growAreaEl.clientWidth) + 'px';
-                    droplet.style.top = '20px';
-                    growAreaEl.appendChild(droplet);
                     
+                    // Random position across the grow area
+                    const randomX = Math.random() * 100; // percentage
+                    droplet.style.left = `${randomX}%`;
+                    
+                    // Random delay for natural effect
+                    const randomDelay = Math.random() * 0.5;
+                    droplet.style.animationDelay = `${randomDelay}s`;
+                    
+                    waterEffectEl.appendChild(droplet);
+                    
+                    // Remove droplet after animation completes
                     setTimeout(() => {
-                        if (droplet.parentNode) {
+                        if (droplet && droplet.parentNode) {
                             droplet.parentNode.removeChild(droplet);
                         }
-                    }, 1000);
-                }, i * 100);
+                    }, 1600); // animation duration + buffer
+                }, i * 50); // stagger the creation
             }
         }
         
@@ -501,28 +1210,34 @@
             gameState.plantsData.forEach(plant => {
                 if (plant.ready) {
                     readyPlants++;
+                    
                     // Base harvest amount + bonus for level and premium strains
                     let harvestAmount = 20 + (gameState.level * 5);
                     
                     if (plant.premium) {
-                        harvestAmount *= 1.5;
+                        harvestAmount = Math.floor(harvestAmount * 1.5);
                     }
                     
                     harvestedCoins += harvestAmount;
                     plant.growth = 0;
                     plant.ready = false;
                     
-                    createCoinEffect(harvestAmount);
+                    // Create coin effect for this plant
+                    createCoinEffect(harvestAmount, plant.id);
                 }
             });
             
             if (readyPlants > 0) {
                 gameState.coins += harvestedCoins;
-                showNotification(`Harvested ${readyPlants} plants for ${harvestedCoins} SHMEK coins!`);
+                
+                // Show notification about harvest
+                showNotification(`Harvested ${readyPlants} plants for ${harvestedCoins} SHMEK coins!`, 'success');
+                
+                // Update UI
                 updateUI();
-                renderPlants();
+                updatePlantGrowth();
             } else {
-                showNotification("No plants ready to harvest!");
+                showNotification('No plants ready to harvest!', 'warning');
             }
             
             // Disable harvest button until plants are ready again
@@ -530,32 +1245,70 @@
         }
         
         // Create coin effect
-        function createCoinEffect(amount) {
-            for (let i = 0; i < Math.min(10, amount/10); i++) {
-                setTimeout(() => {
-                    const coin = document.createElement('div');
-                    coin.className = 'coin';
-                    coin.textContent = '$';
-                    coin.style.left = (Math.random() * growAreaEl.clientWidth) + 'px';
-                    coin.style.bottom = (Math.random() * 50 + 20) + 'px';
-                    growAreaEl.appendChild(coin);
-                    
+        function createCoinEffect(amount, plantId) {
+            // Find the plant container to anchor the effect
+            const plantContainers = growAreaEl.querySelectorAll('.plant-container');
+            const plantIndex = gameState.plantsData.findIndex(p => p.id === plantId);
+            
+            if (plantIndex >= 0 && plantIndex < plantContainers.length) {
+                const plantRect = plantContainers[plantIndex].getBoundingClientRect();
+                const growAreaRect = growAreaEl.getBoundingClientRect();
+                
+                // Calculate position relative to grow area
+                const relativeLeft = plantRect.left - growAreaRect.left + (plantRect.width / 2);
+                const relativeBottom = growAreaRect.height - (plantRect.bottom - growAreaRect.top) + 50;
+                
+                // Create coin animation
+                const coinCount = Math.min(5, Math.ceil(amount / 20));
+                
+                for (let i = 0; i < coinCount; i++) {
                     setTimeout(() => {
-                        if (coin.parentNode) {
-                            coin.parentNode.removeChild(coin);
+                        // Create the coin element
+                        const coin = document.createElement('div');
+                        coin.className = 'coin';
+                        coin.style.left = `${relativeLeft}px`;
+                        coin.style.bottom = `${relativeBottom}px`;
+                        
+                        // Add randomness to the animation
+                        const randomX = (Math.random() - 0.5) * 40;
+                        coin.style.transform = `translateX(${randomX}px)`;
+                        
+                        // Create text showing amount
+                        const text = document.createElement('div');
+                        text.className = 'coin-text';
+                        
+                        // Only show amount on first coin
+                        if (i === 0) {
+                            text.textContent = `+${amount}`;
+                            text.style.left = `${relativeLeft + 15}px`;
+                            text.style.bottom = `${relativeBottom + 10}px`;
+                            text.style.animation = 'collectCoin 1.2s ease-out forwards';
+                            growAreaEl.appendChild(text);
                         }
-                    }, 800);
-                }, i * 80);
+                        
+                        // Add to grow area
+                        growAreaEl.appendChild(coin);
+                        
+                        // Animate the coin
+                        coin.style.animation = `collectCoin ${0.8 + Math.random() * 0.4}s ease-out forwards`;
+                        
+                        // Remove after animation
+                        setTimeout(() => {
+                            if (coin.parentNode) {
+                                coin.parentNode.removeChild(coin);
+                            }
+                            if (text.parentNode) {
+                                text.parentNode.removeChild(text);
+                            }
+                        }, 1200);
+                    }, i * 150);
+                }
             }
         }
         
         // Toggle shop
         function toggleShop() {
-            if (shopEl.style.display === 'block') {
-                shopEl.style.display = 'none';
-            } else {
-                shopEl.style.display = 'block';
-            }
+            shopEl.classList.toggle('active');
         }
         
         // Buy a new plant
@@ -563,12 +1316,12 @@
             const cost = 100;
             
             if (gameState.coins < cost) {
-                showNotification("Not enough SHMEK coins!");
+                showNotification('Not enough SHMEK coins!', 'error');
                 return;
             }
             
             if (gameState.plants >= gameState.maxPlants) {
-                showNotification("Maximum plants reached! Upgrade to increase limit.");
+                showNotification('Maximum plants reached! Upgrade to increase limit.', 'warning');
                 return;
             }
             
@@ -585,7 +1338,7 @@
             
             updateUI();
             renderPlants();
-            showNotification("New plant purchased!");
+            showNotification('New plant purchased!', 'success');
         }
         
         // Buy water
@@ -593,7 +1346,7 @@
             const cost = 50;
             
             if (gameState.coins < cost) {
-                showNotification("Not enough SHMEK coins!");
+                showNotification('Not enough SHMEK coins!', 'error');
                 return;
             }
             
@@ -601,7 +1354,7 @@
             gameState.water += 10;
             
             updateUI();
-            showNotification("Purchased 10 water!");
+            showNotification('Purchased 10 water!', 'success');
         }
         
         // Buy premium strain
@@ -609,12 +1362,12 @@
             const cost = 200;
             
             if (gameState.coins < cost) {
-                showNotification("Not enough SHMEK coins!");
+                showNotification('Not enough SHMEK coins!', 'error');
                 return;
             }
             
             if (gameState.plantsData.every(p => p.premium)) {
-                showNotification("All plants already have premium strains!");
+                showNotification('All plants already have premium strains!', 'warning');
                 return;
             }
             
@@ -630,8 +1383,8 @@
             }
             
             updateUI();
-            renderPlants();
-            showNotification("Premium strain purchased!");
+            renderPlants(); // Re-render to show premium effect
+            showNotification('Premium strain purchased!', 'success');
         }
         
         // Upgrade level
@@ -639,7 +1392,7 @@
             const cost = gameState.level * 500;
             
             if (gameState.coins < cost) {
-                showNotification("Not enough SHMEK coins!");
+                showNotification('Not enough SHMEK coins!', 'error');
                 return;
             }
             
@@ -656,6 +1409,72 @@
         function showLevelUp() {
             newLevelEl.textContent = gameState.level;
             levelUpEl.classList.add('active');
+            createConfetti();
+        }
+        
+        // Create confetti effect for level up
+        function createConfetti() {
+            const colors = ['#ffc107', '#4caf50', '#2196f3', '#e91e63', '#9c27b0'];
+            
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                
+                // Random properties for each piece
+                const size = Math.random() * 10 + 5;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const shape = Math.random() > 0.5 ? '50%' : '0%';
+                
+                confetti.style.width = `${size}px`;
+                confetti.style.height = `${size}px`;
+                confetti.style.backgroundColor = color;
+                confetti.style.borderRadius = shape;
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.top = `${Math.random() * 100}%`;
+                
+                // Custom animation for each piece
+                const duration = Math.random() * 3 + 2;
+                const delay = Math.random() * 2;
+                
+                confetti.style.animation = `fall ${duration}s ease-in ${delay}s forwards`;
+                
+                document.body.appendChild(confetti);
+                
+                // Add animation style
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes fall {
+                        0% {
+                            transform: translateY(-100px) rotate(0deg) scale(0);
+                            opacity: 1;
+                        }
+                        25% {
+                            transform: translateY(${Math.random() * 200}px) 
+                                       translateX(${(Math.random() - 0.5) * 200}px) 
+                                       rotate(${Math.random() * 360}deg) 
+                                       scale(1);
+                        }
+                        100% {
+                            transform: translateY(${window.innerHeight}px) 
+                                       translateX(${(Math.random() - 0.5) * 400}px) 
+                                       rotate(${Math.random() * 720}deg) 
+                                       scale(0.5);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+                
+                // Clean up confetti
+                setTimeout(() => {
+                    if (confetti.parentNode) {
+                        confetti.parentNode.removeChild(confetti);
+                    }
+                    if (style.parentNode) {
+                        style.parentNode.removeChild(style);
+                    }
+                }, (duration + delay) * 1000);
+            }
         }
         
         // Close level up screen
@@ -667,6 +1486,7 @@
         function updateUI() {
             coinsEl.textContent = gameState.coins;
             plantsEl.textContent = gameState.plants;
+            maxPlantsEl.textContent = gameState.maxPlants;
             waterEl.textContent = gameState.water;
             levelEl.textContent = gameState.level;
             
@@ -675,28 +1495,28 @@
             harvestBtn.disabled = !gameState.plantsData.some(p => p.ready);
             
             // Update upgrade button text
-            upgradeBtn.textContent = `⬆️ Upgrade (${gameState.level * 500})`;
+            upgradeBtn.querySelector('span').textContent = `Upgrade (${gameState.level * 500})`;
         }
         
         // Show notification
-        function showNotification(message) {
+        function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
-            notification.className = 'notification';
+            notification.className = `notification ${type}`;
             notification.textContent = message;
             
             document.getElementById('notifications').appendChild(notification);
             
             // Force reflow to trigger animation
             notification.offsetHeight;
-            notification.style.opacity = '1';
+            notification.classList.add('show');
             
             setTimeout(() => {
-                notification.style.opacity = '0';
+                notification.classList.remove('show');
                 setTimeout(() => {
                     if (notification.parentNode) {
                         notification.parentNode.removeChild(notification);
                     }
-                }, 300);
+                }, 500);
             }, 3000);
         }
         
@@ -720,7 +1540,7 @@
                 renderPlants();
                 updateUI();
                 
-                showNotification("Game loaded!");
+                showNotification('Game loaded!', 'info');
             }
         }
         
