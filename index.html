@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHMEK Grower Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #1a6c25, #134d1c);
+            color: white;
+            height: 100vh;
+            user-select: none;
+            overflow: hidden;
+        }
+        
+        #game-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 10px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #header {
+            text-align: center;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        
+        #resources {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        
+        #grow-area {
+            flex: 1;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .plant-container {
+            position: absolute;
+            width: 80px;
+            height: 120px;
+            transform: translateX(-50%);
+        }
+        
+        .plant {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 0;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200"><path d="M50,200 Q30,150 50,100 Q70,150 50,200" fill="%2367a832"/><path d="M50,100 Q30,70 40,40 Q50,60 60,40 Q70,70 50,100" fill="%2367a832"/><path d="M50,40 Q40,20 45,0 Q50,10 55,0 Q60,20 50,40" fill="%2367a832"/></svg>');
+            background-repeat: no-repeat;
+            background-position: bottom;
+            background-size: contain;
+            transition: height 0.5s ease-out;
+        }
+        
+        .pot {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 20px;
+            background-color: #8B4513;
+            border-radius: 0 0 10px 10px;
+        }
+        
+        .growth-indicator {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 5px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+        }
+        
+        .growth-progress {
+            height: 100%;
+            width: 0%;
+            background-color: #4CAF50;
+            border-radius: 5px;
+            transition: width 0.3s;
+        }
+        
+        #actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn {
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #45a049;
+        }
+        
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        #shop {
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 10px;
+            display: none;
+            margin-bottom: 10px;
+        }
+        
+        #shop h3 {
+            margin-top: 0;
+        }
+        
+        .shop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        #notifications {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 300px;
+            z-index: 100;
+        }
+        
+        .notification {
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            text-align: center;
+            animation: fadeIn 0.3s, fadeOut 0.3s 2.7s;
+            opacity: 0;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        /* Game effects */
+        .water-droplet {
+            position: absolute;
+            width: 10px;
+            height: 15px;
+            background-color: #4fc3f7;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            animation: dropWater 1s linear;
+        }
+        
+        @keyframes dropWater {
+            0% { transform: translateY(-20px); opacity: 0; }
+            10% { opacity: 1; }
+            100% { transform: translateY(60px); opacity: 0; }
+        }
+        
+        .coin {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #FFD700;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 12px;
+            color: #333;
+            animation: collectCoin 0.8s ease-out;
+            z-index: 10;
+        }
+        
+        @keyframes collectCoin {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(0, -50px) scale(0.5); opacity: 0; }
+        }
+        
+        #level-up {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        
+        .level-up-content {
+            background-color: #4CAF50;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            transform: scale(0.8);
+            transition: transform 0.5s;
+        }
+        
+        #level-up.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        #level-up.active .level-up-content {
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="header">
+            <h1>SHMEK Grower</h1>
+            <div>Level: <span id="level">1</span></div>
+        </div>
+        
+        <div id="resources">
+            <div>💰 <span id="coins">420</span> SHMEK</div>
+            <div>🌱 Plants: <span id="plants">1</span>/5</div>
+            <div>💧 Water: <span id="water">10</span></div>
+        </div>
+        
+        <div id="grow-area">
+            <!-- Plants will be added here dynamically -->
+        </div>
+        
+        <div id="actions">
+            <button id="water-btn" class="btn">💧 Water Plants</button>
+            <button id="harvest-btn" class="btn">🌿 Harvest</button>
+            <button id="shop-btn" class="btn">🛒 Shop</button>
+            <button id="upgrade-btn" class="btn">⬆️ Upgrade</button>
+        </div>
+        
+        <div id="shop">
+            <h3>SHMEK Market</h3>
+            <div class="shop-item">
+                <span>🌱 New Plant (100 SHMEK)</span>
+                <button id="buy-plant" class="btn">Buy</button>
+            </div>
+            <div class="shop-item">
+                <span>💧 Water x10 (50 SHMEK)</span>
+                <button id="buy-water" class="btn">Buy</button>
+            </div>
+            <div class="shop-item">
+                <span>🧬 Premium Strain (200 SHMEK)</span>
+                <button id="buy-strain" class="btn">Buy</button>
+            </div>
+            <div class="shop-item">
+                <button id="close-shop" class="btn">Close Shop</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notifications"></div>
+    
+    <div id="level-up">
+        <div class="level-up-content">
+            <h2>LEVEL UP!</h2>
+            <p>You advanced to level <span id="new-level">2</span>!</p>
+            <p>Your plants now grow faster!</p>
+            <button id="level-up-continue" class="btn">Continue</button>
+        </div>
+    </div>
+    
+    <script>
+        // Game state
+        const gameState = {
+            coins: 420,
+            plants: 1,
+            maxPlants: 5,
+            water: 10,
+            level: 1,
+            harvestTime: 30, // seconds
+            growthRate: 1,
+            premiumStrains: 0,
+            plantsData: []
+        };
+        
+        // DOM elements
+        const coinsEl = document.getElementById('coins');
+        const plantsEl = document.getElementById('plants');
+        const waterEl = document.getElementById('water');
+        const levelEl = document.getElementById('level');
+        const growAreaEl = document.getElementById('grow-area');
+        const waterBtn = document.getElementById('water-btn');
+        const harvestBtn = document.getElementById('harvest-btn');
+        const shopBtn = document.getElementById('shop-btn');
+        const upgradeBtn = document.getElementById('upgrade-btn');
+        const shopEl = document.getElementById('shop');
+        const buyPlantBtn = document.getElementById('buy-plant');
+        const buyWaterBtn = document.getElementById('buy-water');
+        const buyStrainBtn = document.getElementById('buy-strain');
+        const closeShopBtn = document.getElementById('close-shop');
+        const levelUpEl = document.getElementById('level-up');
+        const newLevelEl = document.getElementById('new-level');
+        const levelUpContinueBtn = document.getElementById('level-up-continue');
+        
+        // Initialize the game
+        function initGame() {
+            updateUI();
+            createInitialPlants();
+            startGrowth();
+            
+            // Event listeners
+            waterBtn.addEventListener('click', waterPlants);
+            harvestBtn.addEventListener('click', harvestPlants);
+            shopBtn.addEventListener('click', toggleShop);
+            closeShopBtn.addEventListener('click', toggleShop);
+            upgradeBtn.addEventListener('click', upgradeLevel);
+            buyPlantBtn.addEventListener('click', buyPlant);
+            buyWaterBtn.addEventListener('click', buyWater);
+            buyStrainBtn.addEventListener('click', buyStrain);
+            levelUpContinueBtn.addEventListener('click', closeLevelUp);
+            
+            // Check if we need to load saved game
+            loadGame();
+        }
+        
+        // Create initial plants
+        function createInitialPlants() {
+            if (gameState.plantsData.length === 0) {
+                for (let i = 0; i < gameState.plants; i++) {
+                    gameState.plantsData.push({
+                        id: i + 1,
+                        growth: 0,
+                        ready: false,
+                        premium: false
+                    });
+                }
+            }
+            renderPlants();
+        }
+        
+        // Render plants in the grow area
+        function renderPlants() {
+            growAreaEl.innerHTML = '';
+            
+            gameState.plantsData.forEach((plant, index) => {
+                const plantWidth = growAreaEl.clientWidth / gameState.maxPlants;
+                const position = (index + 0.5) * plantWidth;
+                
+                const plantContainer = document.createElement('div');
+                plantContainer.className = 'plant-container';
+                plantContainer.style.left = position + 'px';
+                
+                const plantElement = document.createElement('div');
+                plantElement.className = 'plant';
+                plantElement.style.height = (plant.growth * 100) + '%';
+                if (plant.premium) {
+                    plantElement.style.filter = 'hue-rotate(60deg) saturate(1.5)';
+                }
+                
+                const potElement = document.createElement('div');
+                potElement.className = 'pot';
+                
+                const growthIndicator = document.createElement('div');
+                growthIndicator.className = 'growth-indicator';
+                
+                const growthProgress = document.createElement('div');
+                growthProgress.className = 'growth-progress';
+                growthProgress.style.width = (plant.growth * 100) + '%';
+                
+                growthIndicator.appendChild(growthProgress);
+                plantContainer.appendChild(plantElement);
+                plantContainer.appendChild(potElement);
+                plantContainer.appendChild(growthIndicator);
+                growAreaEl.appendChild(plantContainer);
+            });
+        }
+        
+        // Start plant growth
+        function startGrowth() {
+            setInterval(() => {
+                let allReady = true;
+                
+                gameState.plantsData.forEach(plant => {
+                    if (!plant.ready) {
+                        const growthIncrement = 1 / (gameState.harvestTime * 10) * gameState.growthRate;
+                        plant.growth += growthIncrement;
+                        
+                        if (plant.growth >= 1) {
+                            plant.growth = 1;
+                            plant.ready = true;
+                            showNotification("A plant is ready to harvest!");
+                        } else {
+                            allReady = false;
+                        }
+                    }
+                });
+                
+                renderPlants();
+                
+                // Enable harvest button if any plants are ready
+                harvestBtn.disabled = !gameState.plantsData.some(p => p.ready);
+                
+                // Save game state every minute
+                if (Math.random() < 0.01) {
+                    saveGame();
+                }
+            }, 100);
+        }
+        
+        // Water plants
+        function waterPlants() {
+            if (gameState.water <= 0) {
+                showNotification("Not enough water!");
+                return;
+            }
+            
+            if (gameState.plantsData.every(p => p.ready)) {
+                showNotification("All plants are ready to harvest!");
+                return;
+            }
+            
+            gameState.water--;
+            updateUI();
+            
+            // Apply growth boost
+            gameState.plantsData.forEach(plant => {
+                if (!plant.ready) {
+                    plant.growth += 0.1;
+                    if (plant.growth > 1) {
+                        plant.growth = 1;
+                        plant.ready = true;
+                    }
+                }
+            });
+            
+            renderPlants();
+            createWaterEffect();
+            
+            // Enable harvest button if any plants are ready
+            harvestBtn.disabled = !gameState.plantsData.some(p => p.ready);
+        }
+        
+        // Create water effect
+        function createWaterEffect() {
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    const droplet = document.createElement('div');
+                    droplet.className = 'water-droplet';
+                    droplet.style.left = (Math.random() * growAreaEl.clientWidth) + 'px';
+                    droplet.style.top = '20px';
+                    growAreaEl.appendChild(droplet);
+                    
+                    setTimeout(() => {
+                        if (droplet.parentNode) {
+                            droplet.parentNode.removeChild(droplet);
+                        }
+                    }, 1000);
+                }, i * 100);
+            }
+        }
+        
+        // Harvest plants
+        function harvestPlants() {
+            let harvestedCoins = 0;
+            let readyPlants = 0;
+            
+            gameState.plantsData.forEach(plant => {
+                if (plant.ready) {
+                    readyPlants++;
+                    // Base harvest amount + bonus for level and premium strains
+                    let harvestAmount = 20 + (gameState.level * 5);
+                    
+                    if (plant.premium) {
+                        harvestAmount *= 1.5;
+                    }
+                    
+                    harvestedCoins += harvestAmount;
+                    plant.growth = 0;
+                    plant.ready = false;
+                    
+                    createCoinEffect(harvestAmount);
+                }
+            });
+            
+            if (readyPlants > 0) {
+                gameState.coins += harvestedCoins;
+                showNotification(`Harvested ${readyPlants} plants for ${harvestedCoins} SHMEK coins!`);
+                updateUI();
+                renderPlants();
+            } else {
+                showNotification("No plants ready to harvest!");
+            }
+            
+            // Disable harvest button until plants are ready again
+            harvestBtn.disabled = true;
+        }
+        
+        // Create coin effect
+        function createCoinEffect(amount) {
+            for (let i = 0; i < Math.min(10, amount/10); i++) {
+                setTimeout(() => {
+                    const coin = document.createElement('div');
+                    coin.className = 'coin';
+                    coin.textContent = '$';
+                    coin.style.left = (Math.random() * growAreaEl.clientWidth) + 'px';
+                    coin.style.bottom = (Math.random() * 50 + 20) + 'px';
+                    growAreaEl.appendChild(coin);
+                    
+                    setTimeout(() => {
+                        if (coin.parentNode) {
+                            coin.parentNode.removeChild(coin);
+                        }
+                    }, 800);
+                }, i * 80);
+            }
+        }
+        
+        // Toggle shop
+        function toggleShop() {
+            if (shopEl.style.display === 'block') {
+                shopEl.style.display = 'none';
+            } else {
+                shopEl.style.display = 'block';
+            }
+        }
+        
+        // Buy a new plant
+        function buyPlant() {
+            const cost = 100;
+            
+            if (gameState.coins < cost) {
+                showNotification("Not enough SHMEK coins!");
+                return;
+            }
+            
+            if (gameState.plants >= gameState.maxPlants) {
+                showNotification("Maximum plants reached! Upgrade to increase limit.");
+                return;
+            }
+            
+            gameState.coins -= cost;
+            gameState.plants++;
+            
+            // Add a new plant to the data
+            gameState.plantsData.push({
+                id: gameState.plantsData.length + 1,
+                growth: 0,
+                ready: false,
+                premium: false
+            });
+            
+            updateUI();
+            renderPlants();
+            showNotification("New plant purchased!");
+        }
+        
+        // Buy water
+        function buyWater() {
+            const cost = 50;
+            
+            if (gameState.coins < cost) {
+                showNotification("Not enough SHMEK coins!");
+                return;
+            }
+            
+            gameState.coins -= cost;
+            gameState.water += 10;
+            
+            updateUI();
+            showNotification("Purchased 10 water!");
+        }
+        
+        // Buy premium strain
+        function buyStrain() {
+            const cost = 200;
+            
+            if (gameState.coins < cost) {
+                showNotification("Not enough SHMEK coins!");
+                return;
+            }
+            
+            if (gameState.plantsData.every(p => p.premium)) {
+                showNotification("All plants already have premium strains!");
+                return;
+            }
+            
+            gameState.coins -= cost;
+            gameState.premiumStrains++;
+            
+            // Find a plant that's not premium yet
+            for (let i = 0; i < gameState.plantsData.length; i++) {
+                if (!gameState.plantsData[i].premium) {
+                    gameState.plantsData[i].premium = true;
+                    break;
+                }
+            }
+            
+            updateUI();
+            renderPlants();
+            showNotification("Premium strain purchased!");
+        }
+        
+        // Upgrade level
+        function upgradeLevel() {
+            const cost = gameState.level * 500;
+            
+            if (gameState.coins < cost) {
+                showNotification("Not enough SHMEK coins!");
+                return;
+            }
+            
+            gameState.coins -= cost;
+            gameState.level++;
+            gameState.growthRate *= 1.2;
+            gameState.maxPlants++;
+            
+            updateUI();
+            showLevelUp();
+        }
+        
+        // Show level up animation
+        function showLevelUp() {
+            newLevelEl.textContent = gameState.level;
+            levelUpEl.classList.add('active');
+        }
+        
+        // Close level up screen
+        function closeLevelUp() {
+            levelUpEl.classList.remove('active');
+        }
+        
+        // Update UI
+        function updateUI() {
+            coinsEl.textContent = gameState.coins;
+            plantsEl.textContent = gameState.plants;
+            waterEl.textContent = gameState.water;
+            levelEl.textContent = gameState.level;
+            
+            // Update button states
+            waterBtn.disabled = gameState.water <= 0 || gameState.plantsData.every(p => p.ready);
+            harvestBtn.disabled = !gameState.plantsData.some(p => p.ready);
+            
+            // Update upgrade button text
+            upgradeBtn.textContent = `⬆️ Upgrade (${gameState.level * 500})`;
+        }
+        
+        // Show notification
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            
+            document.getElementById('notifications').appendChild(notification);
+            
+            // Force reflow to trigger animation
+            notification.offsetHeight;
+            notification.style.opacity = '1';
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // Save game state to local storage
+        function saveGame() {
+            localStorage.setItem('shmekGame', JSON.stringify(gameState));
+        }
+        
+        // Load game state from local storage
+        function loadGame() {
+            const savedGame = localStorage.getItem('shmekGame');
+            if (savedGame) {
+                const parsedGame = JSON.parse(savedGame);
+                
+                // Update all properties
+                Object.keys(parsedGame).forEach(key => {
+                    gameState[key] = parsedGame[key];
+                });
+                
+                // Re-render the plants
+                renderPlants();
+                updateUI();
+                
+                showNotification("Game loaded!");
+            }
+        }
+        
+        // Window resize handler
+        window.addEventListener('resize', renderPlants);
+        
+        // Start the game when page loads
+        window.addEventListener('load', initGame);
+        
+        // Telegram Game API Communication
+        window.addEventListener('message', function(event) {
+            if (event.data === 'ready') {
+                // Tell Telegram we're ready
+                window.parent.postMessage('ready', '*');
+            }
+        });
+    </script>
+</body>
+</html>
