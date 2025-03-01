@@ -3,32 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SHMEK DYNASTY | Cannabis Empire Game</title>
+    <title>SHMEK DYNASTY</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Подключаем SDK Telegram Mini Apps -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --primary: #1b5e20;
             --primary-light: #4caf50;
-            --primary-dark: #0d3c10;
-            --secondary: #7cb342;
             --accent: #ffd54f;
-            /* Динамические цвета на основе темы Telegram */
-            --dark: var(--tg-theme-bg-color, #121212);
-            --dark-800: var(--tg-theme-secondary-bg-color, #181818);
-            --dark-600: var(--tg-theme-secondary-bg-color, #222222);
-            --light: var(--tg-theme-text-color, #f5f5f5);
-            --danger: #e53935;
+            --dark: #121212;
+            --dark-800: #181818;
+            --dark-600: #222222;
+            --light: #f5f5f5;
             --success: #43a047;
-            --warning: #ffb300;
-            --info: #0288d1;
-            --purple: #9c27b0;
             --border-radius: 12px;
-            --shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
-            --transition: all 0.3s cubic-bezier(0.215, 0.61, 0.355, 1);
             --font: 'Exo 2', sans-serif;
         }
         
@@ -41,442 +31,359 @@
         }
         
         body {
-            background: var(--dark);
-            color: var(--light);
+            background: var(--tg-theme-bg-color, var(--dark));
+            color: var(--tg-theme-text-color, var(--light));
             min-height: 100vh;
-            overflow-x: hidden;
-            padding: 0;
+            padding: 16px;
             margin: 0;
-            overscroll-behavior: none;
         }
         
-        /* Background effects */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 10% 10%, rgba(76, 175, 80, 0.1), transparent 40%),
-                radial-gradient(circle at 90% 90%, rgba(255, 213, 79, 0.1), transparent 40%),
-                var(--dark);
-            z-index: -1;
-        }
-        
-        .container {
-            max-width: 100%;
-            width: 100%;
-            margin: 0 auto;
-            padding: 12px;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-        
-        /* Header */
         .game-header {
             text-align: center;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
         
         .game-logo {
-            font-size: 2.2rem;
+            font-size: 2rem;
             font-weight: 800;
             margin: 8px 0;
             background: linear-gradient(45deg, var(--accent), #ff8f00);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            position: relative;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         
         .game-tagline {
             font-size: 0.9rem;
             opacity: 0.8;
             margin-bottom: 12px;
-            letter-spacing: 0.5px;
         }
-
-        /* Остальные стили сохраняются, как в оригинале */
-        /* ... */
         
-        /* Добавим стили специфичные для Telegram */
-        .tg-button {
-            background-color: var(--tg-theme-button-color, #3390ec);
-            color: var(--tg-theme-button-text-color, #ffffff);
+        .resources {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+            background: var(--tg-theme-secondary-bg-color, var(--dark-800));
+            padding: 12px;
+            border-radius: var(--border-radius);
+        }
+        
+        .resource {
+            text-align: center;
+            padding: 8px;
+            background: var(--dark-600);
+            border-radius: 8px;
+        }
+        
+        .resource-icon {
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+        }
+        
+        .resource-value {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        
+        .resource-label {
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+        
+        .grow-progress {
+            background: var(--dark-600);
+            padding: 12px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .progress-bar {
+            height: 10px;
+            background: var(--dark);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .game-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .action-btn {
+            padding: 12px 0;
             border: none;
             border-radius: var(--border-radius);
-            padding: 10px 15px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: var(--transition);
-            font-size: 0.9rem;
+            text-align: center;
+            color: white;
         }
         
-        .tg-button:active {
-            transform: translateY(2px);
-            opacity: 0.9;
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
-        .safe-area-bottom {
-            height: env(safe-area-inset-bottom, 0px);
-            width: 100%;
+        .btn-grow {
+            background: var(--primary);
         }
         
-        /* Адаптируем стили под мобильные устройства Telegram */
-        @media (max-width: 480px) {
-            .container {
-                padding: 8px;
-            }
-            
-            .bottom-nav {
-                padding-bottom: env(safe-area-inset-bottom, 0);
-            }
-            
-            .character-tab {
-                min-width: 70px;
-                height: 70px;
-                margin-right: 8px;
-            }
-            
-            .action-btn {
-                padding: 8px;
-                font-size: 0.8rem;
-            }
+        .btn-harvest {
+            background: #ffc107;
+            color: black;
+        }
+        
+        .btn-sell {
+            background: #03a9f4;
+        }
+        
+        .btn-special {
+            background: #9c27b0;
+        }
+        
+        .log-area {
+            margin-top: 20px;
+            padding: 12px;
+            background: var(--dark-800);
+            border-radius: var(--border-radius);
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            padding: 8px 4px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .log-icon {
+            margin-right: 8px;
+        }
+        
+        .log-message {
+            flex: 1;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="game-header">
-            <h1 class="game-logo">SHMEK DYNASTY</h1>
-            <div class="game-tagline">Build Your Cannabis Empire</div>
+    <div class="game-header">
+        <h1 class="game-logo">SHMEK DYNASTY</h1>
+        <div class="game-tagline">Build Your Cannabis Empire</div>
+    </div>
+    
+    <div class="resources">
+        <div class="resource">
+            <div class="resource-icon">💰</div>
+            <div class="resource-value"><span id="coins">1000</span></div>
+            <div class="resource-label">Coins</div>
         </div>
-        
-        <!-- Resources -->
-        <div class="card">
-            <div class="resources">
-                <div class="resource">
-                    <div class="resource-icon">💰</div>
-                    <div class="resource-value"><span id="coins">1000</span></div>
-                    <div class="resource-label">Coins</div>
-                </div>
-                <div class="resource">
-                    <div class="resource-icon">🌿</div>
-                    <div class="resource-value"><span id="weed">0</span></div>
-                    <div class="resource-label">Weed</div>
-                </div>
-                <div class="resource">
-                    <div class="resource-icon">⚗️</div>
-                    <div class="resource-value"><span id="research">0</span></div>
-                    <div class="resource-label">Research</div>
-                </div>
-                <div class="resource">
-                    <div class="resource-icon">✨</div>
-                    <div class="resource-value"><span id="prestige">0</span></div>
-                    <div class="resource-label">Prestige</div>
-                </div>
-            </div>
+        <div class="resource">
+            <div class="resource-icon">🌿</div>
+            <div class="resource-value"><span id="weed">0</span></div>
+            <div class="resource-label">Weed</div>
         </div>
-        
-        <!-- Остальное содержимое сохраняется, как в оригинале -->
-        <!-- ... -->
-        
-        <!-- Notifications area -->
-        <div id="notifications"></div>
-        <div class="safe-area-bottom"></div>
+        <div class="resource">
+            <div class="resource-icon">⚗️</div>
+            <div class="resource-value"><span id="research">0</span></div>
+            <div class="resource-label">Research</div>
+        </div>
+        <div class="resource">
+            <div class="resource-icon">✨</div>
+            <div class="resource-value"><span id="level">1</span></div>
+            <div class="resource-label">Level</div>
+        </div>
+    </div>
+    
+    <div class="grow-progress">
+        <div class="progress-header">
+            <div>Growing Progress</div>
+            <div id="progress-value">0%</div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-bar-fill" id="progress-bar"></div>
+        </div>
+    </div>
+    
+    <div class="game-actions">
+        <button class="action-btn btn-grow" id="btn-grow">Grow 🌱</button>
+        <button class="action-btn btn-harvest" id="btn-harvest" disabled>Harvest ✂️</button>
+        <button class="action-btn btn-sell" id="btn-sell" disabled>Sell 💰</button>
+        <button class="action-btn btn-special" id="btn-special">Special ✨</button>
+    </div>
+    
+    <div class="log-area" id="log-area">
+        <div class="log-entry">
+            <div class="log-icon">📱</div>
+            <div class="log-message">Welcome to SHMEK DYNASTY!</div>
+        </div>
     </div>
     
     <script>
-        // Инициализация Telegram WebApp
-        let tg = window.Telegram.WebApp;
+        // Получаем WebApp Telegram, если он доступен
+        const tg = window.Telegram?.WebApp;
         
-        // Сообщаем Telegram, что приложение готово к отображению
-        tg.ready();
+        // Переменные состояния игры
+        let coins = 1000;
+        let weed = 0;
+        let research = 0;
+        let level = 1;
+        let growProgress = 0;
+        let isHarvestReady = false;
+        let hasInventory = false;
         
-        // Расширяем WebApp на всю высоту
-        tg.expand();
+        // DOM элементы
+        const coinsEl = document.getElementById('coins');
+        const weedEl = document.getElementById('weed');
+        const researchEl = document.getElementById('research');
+        const levelEl = document.getElementById('level');
+        const progressBarEl = document.getElementById('progress-bar');
+        const progressValueEl = document.getElementById('progress-value');
+        const btnGrow = document.getElementById('btn-grow');
+        const btnHarvest = document.getElementById('btn-harvest');
+        const btnSell = document.getElementById('btn-sell');
+        const btnSpecial = document.getElementById('btn-special');
+        const logArea = document.getElementById('log-area');
         
-        // Устанавливаем стиль шапки в соответствии с темой Telegram
-        tg.setHeaderColor(tg.themeParams.bg_color || "#121212");
-        
-        // Включаем навигационную панель в соответствии с цветами темы
-        tg.setBackgroundColor(tg.themeParams.bg_color || "#121212");
-        
-        // Игровое состояние
-        const gameState = {
-            // Все те же переменные, что и в оригинале
-            coins: 1000,
-            weed: 0,
-            research: 0,
-            // и т.д.
-        };
-        
-        // DOM-элементы
-        // Такие же, как в оригинале
-        
-        // Инициализация игры
-        function initGame() {
-            // Пытаемся загрузить сохраненную игру из Telegram Storage
-            loadGame();
+        // Инициализация
+        function init() {
+            // Настраиваем Telegram API, если доступно
+            if (tg) {
+                try {
+                    tg.ready();
+                    tg.expand();
+                } catch (e) {
+                    console.log('Telegram API error:', e);
+                }
+            }
             
-            // Остальная инициализация, как в оригинале
+            // Устанавливаем обработчики событий
+            btnGrow.addEventListener('click', grow);
+            btnHarvest.addEventListener('click', harvest);
+            btnSell.addEventListener('click', sell);
+            btnSpecial.addEventListener('click', special);
+            
+            // Добавляем сообщение в лог
+            addLogMessage('Game started!', '🎮');
+        }
+        
+        // Обновление интерфейса
+        function updateUI() {
+            coinsEl.textContent = coins;
+            weedEl.textContent = weed;
+            researchEl.textContent = research;
+            levelEl.textContent = level;
+            
+            const progressPercent = Math.floor(growProgress * 100);
+            progressBarEl.style.width = `${progressPercent}%`;
+            progressValueEl.textContent = `${progressPercent}%`;
+            
+            // Обновляем кнопки
+            btnGrow.disabled = growProgress >= 1;
+            btnHarvest.disabled = growProgress < 1 || isHarvestReady;
+            btnSell.disabled = !isHarvestReady || !hasInventory;
+        }
+        
+        // Функция выращивания
+        function grow() {
+            if (growProgress < 1) {
+                growProgress += 0.2;
+                if (growProgress > 1) growProgress = 1;
+                
+                updateUI();
+                
+                if (growProgress < 1) {
+                    addLogMessage('Growing plants...', '🌱');
+                } else {
+                    addLogMessage('Plants are ready to harvest!', '🌿');
+                }
+            }
+        }
+        
+        // Функция сбора урожая
+        function harvest() {
+            if (growProgress >= 1 && !isHarvestReady) {
+                growProgress = 0;
+                isHarvestReady = true;
+                hasInventory = true;
+                
+                updateUI();
+                addLogMessage('Harvested some quality weed!', '✂️');
+            }
+        }
+        
+        // Функция продажи
+        function sell() {
+            if (isHarvestReady && hasInventory) {
+                const profit = 100 + Math.floor(Math.random() * 50);
+                coins += profit;
+                weed += 10;
+                isHarvestReady = false;
+                hasInventory = false;
+                
+                updateUI();
+                addLogMessage(`Sold batch for ${profit} coins!`, '💰');
+                
+                // Уровень повышается каждые 1000 монет
+                if (coins >= level * 1000 && level < 10) {
+                    level++;
+                    addLogMessage(`Level up! You are now level ${level}`, '🎖️');
+                }
+            }
+        }
+        
+        // Функция специального действия
+        function special() {
+            const researchPoints = 5 + Math.floor(Math.random() * 5);
+            research += researchPoints;
+            
             updateUI();
-            createCharacterTabs();
-            createCharacterScreens();
-            
-            // Добавляем обработчики событий
-            // ...
-            
-            // Показываем приветственное уведомление
-            showNotification('Welcome to SHMEK DYNASTY!', 'Build your cannabis empire!', 'info');
-            
-            // Отображаем кнопку Main Button в Telegram для главных действий
-            tg.MainButton.setText('GROW WEED');
-            tg.MainButton.show();
-            
-            // Обработчик нажатия на главную кнопку
-            tg.MainButton.onClick(() => {
-                const character = gameState.characterData.find(c => c.id === gameState.activeCharacter);
-                if (character && character.unlocked) {
-                    performAction('grow', character.id);
-                }
-            });
+            addLogMessage(`Gained ${researchPoints} research points`, '✨');
         }
         
-        // Функции для сохранения и загрузки игры с использованием Telegram Cloud Storage
-        function saveGame() {
-            try {
-                // Конвертируем игровое состояние в строку
-                const gameStateString = JSON.stringify(gameState);
-                
-                // Сохраняем в CloudStorage через Telegram
-                if (tg.CloudStorage && tg.CloudStorage.setItem) {
-                    tg.CloudStorage.setItem('shmekDynasty', gameStateString);
-                } else {
-                    // Резервный вариант - localStorage
-                    localStorage.setItem('shmekDynasty', gameStateString);
-                }
-            } catch (error) {
-                console.error('Error saving game:', error);
+        // Добавление сообщения в лог
+        function addLogMessage(message, icon = '📝') {
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            
+            const logIcon = document.createElement('div');
+            logIcon.className = 'log-icon';
+            logIcon.textContent = icon;
+            
+            const logMessage = document.createElement('div');
+            logMessage.className = 'log-message';
+            logMessage.textContent = message;
+            
+            logEntry.appendChild(logIcon);
+            logEntry.appendChild(logMessage);
+            
+            logArea.insertBefore(logEntry, logArea.firstChild);
+            
+            // Ограничиваем количество сообщений
+            if (logArea.children.length > 10) {
+                logArea.removeChild(logArea.lastChild);
             }
         }
         
-        function loadGame() {
-            try {
-                // Пробуем загрузить из CloudStorage Telegram
-                if (tg.CloudStorage && tg.CloudStorage.getItem) {
-                    tg.CloudStorage.getItem('shmekDynasty', (error, data) => {
-                        if (error) {
-                            console.error('Error loading from Telegram CloudStorage:', error);
-                            // Пробуем резервный вариант
-                            loadFromLocalStorage();
-                        } else if (data) {
-                            applyLoadedGameState(data);
-                        }
-                    });
-                } else {
-                    // Резервный вариант - localStorage
-                    loadFromLocalStorage();
-                }
-            } catch (error) {
-                console.error('Error loading game:', error);
-                showNotification('Error Loading Game', 'There was an error loading your saved game.', 'error');
-            }
-        }
-        
-        function loadFromLocalStorage() {
-            const savedGame = localStorage.getItem('shmekDynasty');
-            if (savedGame) {
-                applyLoadedGameState(savedGame);
-            }
-        }
-        
-        function applyLoadedGameState(savedGameString) {
-            try {
-                const parsedGame = JSON.parse(savedGameString);
-                
-                // Обновляем состояние игры
-                gameState.coins = parsedGame.coins || gameState.coins;
-                gameState.weed = parsedGame.weed || gameState.weed;
-                gameState.research = parsedGame.research || gameState.research;
-                gameState.prestige = parsedGame.prestige || gameState.prestige;
-                gameState.empireLevel = parsedGame.empireLevel || gameState.empireLevel;
-                gameState.totalHarvested = parsedGame.totalHarvested || gameState.totalHarvested;
-                gameState.totalSold = parsedGame.totalSold || gameState.totalSold;
-                gameState.researchLevels = parsedGame.researchLevels || gameState.researchLevels;
-                gameState.activeCharacter = parsedGame.activeCharacter || gameState.activeCharacter;
-                gameState.activeTab = parsedGame.activeTab || gameState.activeTab;
-                
-                // Обновляем персонажей
-                if (parsedGame.characterData) {
-                    gameState.characterData = parsedGame.characterData;
-                }
-                
-                // Обновляем UI
-                updateUI();
-                createCharacterTabs();
-                createCharacterScreens();
-                
-                // Переключаемся на активную вкладку
-                switchTab(gameState.activeTab);
-                
-                showNotification('Game Loaded', 'Your progress has been loaded!', 'success');
-            } catch (error) {
-                console.error('Error parsing saved game:', error);
-                showNotification('Error Loading Game', 'There was an error loading your saved game.', 'error');
-            }
-        }
-        
-        // Обновляем функцию performAction для интеграции с кнопкой Telegram
-        function performAction(action, characterId) {
-            const character = gameState.characterData.find(c => c.id === characterId);
-            
-            if (character) {
-                // Логика действия такая же, как в оригинале
-                // ...
-                
-                // После выполнения действия обновляем кнопку Telegram в зависимости от состояния игры
-                updateTelegramMainButton(character);
-            }
-        }
-        
-        // Новая функция для обновления главной кнопки Telegram
-        function updateTelegramMainButton(character) {
-            if (!character) {
-                character = gameState.characterData.find(c => c.id === gameState.activeCharacter);
-            }
-            
-            if (character && character.unlocked) {
-                if (character.progress.grow >= 1 && character.progress.harvest < 1) {
-                    tg.MainButton.setText('HARVEST');
-                    tg.MainButton.show();
-                } else if (character.progress.harvest >= 1 && character.progress.inventory > 0) {
-                    tg.MainButton.setText('SELL');
-                    tg.MainButton.show();
-                } else if (character.progress.grow < 1) {
-                    tg.MainButton.setText('GROW');
-                    tg.MainButton.show();
-                } else {
-                    tg.MainButton.hide();
-                }
-            } else {
-                tg.MainButton.hide();
-            }
-        }
-        
-        // Модифицируем функцию switchCharacter для обновления кнопки Telegram
-        function switchCharacter(characterId) {
-            // Оригинальная логика
-            gameState.activeCharacter = characterId;
-            
-            // Обновляем UI
-            const characterTabs = document.querySelectorAll('.character-tab');
-            characterTabs.forEach(tab => {
-                tab.classList.toggle('active', parseInt(tab.dataset.characterId) === characterId);
-            });
-            
-            const characterScreens = document.querySelectorAll('.character-screen');
-            characterScreens.forEach(screen => {
-                screen.classList.toggle('active', parseInt(screen.dataset.characterId) === characterId);
-            });
-            
-            // Обновляем кнопку Telegram
-            const character = gameState.characterData.find(c => c.id === characterId);
-            updateTelegramMainButton(character);
-        }
-        
-        // Модифицируем функцию showNotification для лучшей интеграции с Telegram
-        function showNotification(title, message, type = 'info') {
-            // Для важных уведомлений используем нативные уведомления Telegram
-            if (type === 'success' || type === 'error') {
-                tg.showPopup({
-                    title: title,
-                    message: message,
-                    buttons: [{ type: 'ok' }]
-                });
-                return;
-            }
-            
-            // Для менее важных - наши встроенные уведомления
-            const notifications = document.getElementById('notifications');
-            
-            // Создаем уведомление
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            
-            // Иконка в зависимости от типа
-            let icon = '';
-            switch (type) {
-                case 'success':
-                    icon = '✅';
-                    break;
-                case 'error':
-                    icon = '❌';
-                    break;
-                case 'warning':
-                    icon = '⚠️';
-                    break;
-                default:
-                    icon = 'ℹ️';
-            }
-            
-            notification.innerHTML = `
-                <div class="notification-icon">${icon}</div>
-                <div class="notification-content">
-                    <div class="notification-title">${title}</div>
-                    <div class="notification-message">${message}</div>
-                </div>
-            `;
-            
-            // Добавляем в DOM
-            notifications.appendChild(notification);
-            
-            // Показываем уведомление с анимацией
-            setTimeout(() => {
-                notification.classList.add('show');
-            }, 10);
-            
-            // Удаляем уведомление после задержки
-            setTimeout(() => {
-                notification.classList.remove('show');
-                
-                // Удаляем из DOM после анимации
-                setTimeout(() => {
-                    notification.remove();
-                }, 300);
-            }, 3000);
-        }
-        
-        // Обрабатываем события перехода пользователя в другие приложения/чаты и возврата
-        window.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden') {
-                // Пользователь переключился на другое приложение/чат
-                // Сохраняем состояние игры
-                saveGame();
-            } else {
-                // Пользователь вернулся в игру
-                // Обновляем UI на случай, если что-то изменилось
-                updateUI();
-            }
-        });
-        
-        // Обрабатываем событие закрытия приложения
-        window.addEventListener('beforeunload', () => {
-            // Сохраняем игру перед закрытием
-            saveGame();
-        });
-        
-        // Остальные функции из оригинальной игры
-        // ...
-        
-        // Инициализируем игру при загрузке страницы
-        document.addEventListener('DOMContentLoaded', initGame);
+        // Инициализируем игру
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
