@@ -525,11 +525,33 @@
         // Включаем навигационную панель в соответствии с цветами темы
         tg.setBackgroundColor(tg.themeParams.bg_color || "#121212");
         
-        // Переменные для отслеживания состояния кнопки (добавлено для устранения мерцания)
-        let lastButtonState = {
-            isVisible: false,
-            text: ""
+        // Переменные для отслеживания состояния кнопки
+        let currentButtonState = {
+            type: "", // grow, harvest, sell или none
+            characterId: null
         };
+        
+        // Фиксированные обработчики для кнопки
+        const buttonHandlers = {
+            grow: function() {
+                if (currentButtonState.type === "grow" && currentButtonState.characterId) {
+                    performAction('grow', currentButtonState.characterId);
+                }
+            },
+            harvest: function() {
+                if (currentButtonState.type === "harvest" && currentButtonState.characterId) {
+                    performAction('harvest', currentButtonState.characterId);
+                }
+            },
+            sell: function() {
+                if (currentButtonState.type === "sell" && currentButtonState.characterId) {
+                    performAction('sell', currentButtonState.characterId);
+                }
+            }
+        };
+        
+        // Флаг для предотвращения частых обновлений
+        let isUpdatingButton = false;
         
         // Базовые данные персонажей
         const characterData = [
@@ -623,6 +645,23 @@
             characterData: characterData
         };
         
+        // Инициализация обработчиков Telegram MainButton
+        function setupButtonHandlers() {
+            // Удаляем любые существующие обработчики
+            tg.MainButton.offClick(buttonHandlers.grow);
+            tg.MainButton.offClick(buttonHandlers.harvest);
+            tg.MainButton.offClick(buttonHandlers.sell);
+            
+            // Применяем обработчик в зависимости от состояния
+            if (currentButtonState.type === "grow") {
+                tg.MainButton.onClick(buttonHandlers.grow);
+            } else if (currentButtonState.type === "harvest") {
+                tg.MainButton.onClick(buttonHandlers.harvest);
+            } else if (currentButtonState.type === "sell") {
+                tg.MainButton.onClick(buttonHandlers.sell);
+            }
+        }
+        
         // Инициализация игры
         function initGame() {
             // Пытаемся загрузить сохраненную игру
@@ -633,9 +672,11 @@
             createCharacterTabs();
             createCharacterScreens();
             
-            // Устанавливаем интервал для автоматического обновления
-            // Увеличен интервал с 1000 до 2000 мс для уменьшения мерцания
-            setInterval(updateGame, 2000);
+            // Настраиваем обработчики кнопок
+            setupButtonHandlers();
+            
+            // Устанавливаем интервал для автоматического обновления - увеличен до 3000 мс
+            setInterval(updateGame, 3000);
             
             // Показываем приветственное уведомление
             showNotification('Welcome to SHMEK DYNASTY!', 'Build your cannabis empire!', 'info');
@@ -644,7 +685,7 @@
             updateTelegramMainButton();
         }
         
-        // Обновление игры (вызывается каждые 2 секунды)
+        // Обновление игры (вызывается каждые 3 секунды)
         function updateGame() {
             // Обновляем прогресс персонажей с auto-grow
             let stateChanged = false;
@@ -845,8 +886,23 @@
             }
         }
         
+        // Функция для дебаунсинга (предотвращает слишком частые вызовы)
+        function debounce(func, wait) {
+            let timeout;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    func.apply(context, args);
+                }, wait);
+            };
+        }
+        
         // Выполнение действия (grow, harvest, sell)
         function performAction(action, characterId) {
+            if (isUpdatingButton) return; // Предотвращаем выполнение действия во время обновления кнопки
+            
             const character = gameState.characterData.find(c => c.id === characterId);
             
             if (character && character.unlocked) {
@@ -893,9 +949,15 @@
                 // Обновляем UI
                 updateUI();
                 
-                // Обновляем главную кнопку Telegram через небольшую задержку
-                // для предотвращения частых обновлений
-                setTimeout(updateTelegramMainButton, 50);
+                // Используем дебаунсинг для обновления кнопки
+                isUpdatingButton = true;
+                setTimeout(() => {
+                    updateTelegramMainButton();
+                    isUpdatingButton = false;
+                }, 100);
+                
+                // Сохраняем прогресс
+                debounce(saveGame, 1000)();
             }
         }
         
@@ -915,6 +977,9 @@
                 
                 // Переключаемся на нового персонажа
                 switchCharacter(characterId);
+                
+                // Сохраняем прогресс
+                saveGame();
             } else if (character && !character.unlocked) {
                 showNotification('Not Enough Coins', `You need ${character.price - gameState.coins} more coins to unlock ${character.name}.`, 'warning');
             }
@@ -936,67 +1001,66 @@
                 screen.classList.toggle('active', parseInt(screen.dataset.characterId) === characterId);
             });
             
-            // Обновляем кнопку Telegram
-            updateTelegramMainButton();
+            // Обновляем кнопку Telegram с задержкой
+            setTimeout(updateTelegramMainButton, 50);
         }
         
         // Обновление главной кнопки Telegram (оптимизировано для предотвращения мерцания)
         function updateTelegramMainButton() {
-            const character = gameState.characterData.find(c => c.id === gameState.activeCharacter);
+            // Если мы уже обновляем кнопку, пропускаем вызов
+            if (isUpdatingButton) return;
             
-            if (!character || !character.unlocked) {
-                if (lastButtonState.isVisible) {
+            isUpdatingButton = true;
+            
+            try {
+                const character = gameState.characterData.find(c => c.id === gameState.activeCharacter);
+                
+                // Если нет персонажа или он не разблокирован - скрываем кнопку
+                if (!character || !character.unlocked) {
                     tg.MainButton.hide();
-                    lastButtonState.isVisible = false;
-                }
-                return;
-            }
-            
-            let newText = "";
-            let shouldBeVisible = true;
-            
-            // Определяем текст и видимость кнопки
-            if (character.progress.grow >= 1 && character.progress.harvest < 1) {
-                newText = "HARVEST NOW";
-            } else if (character.progress.harvest >= 1 && character.progress.inventory > 0) {
-                newText = "SELL WEED";
-            } else if (character.progress.grow < 1) {
-                newText = "START GROWING";
-            } else {
-                shouldBeVisible = false;
-            }
-            
-            // Обновляем кнопку только при изменении состояния
-            if (shouldBeVisible) {
-                // Обновляем текст только если он изменился
-                if (newText !== lastButtonState.text) {
-                    tg.MainButton.setText(newText);
-                    lastButtonState.text = newText;
-                    
-                    // Обновляем обработчик в зависимости от действия
-                    if (newText === "HARVEST NOW") {
-                        tg.MainButton.offClick();
-                        tg.MainButton.onClick(() => performAction('harvest', character.id));
-                    } else if (newText === "SELL WEED") {
-                        tg.MainButton.offClick();
-                        tg.MainButton.onClick(() => performAction('sell', character.id));
-                    } else if (newText === "START GROWING") {
-                        tg.MainButton.offClick();
-                        tg.MainButton.onClick(() => performAction('grow', character.id));
-                    }
+                    currentButtonState.type = "none";
+                    currentButtonState.characterId = null;
+                    setupButtonHandlers();
+                    return;
                 }
                 
-                // Показываем кнопку, если она скрыта
-                if (!lastButtonState.isVisible) {
-                    tg.MainButton.show();
-                    lastButtonState.isVisible = true;
+                let newType = "none";
+                let buttonText = "";
+                
+                // Определяем состояние кнопки
+                if (character.progress.grow >= 1 && character.progress.harvest < 1) {
+                    newType = "harvest";
+                    buttonText = "HARVEST NOW";
+                } else if (character.progress.harvest >= 1 && character.progress.inventory > 0) {
+                    newType = "sell";
+                    buttonText = "SELL WEED";
+                } else if (character.progress.grow < 1) {
+                    newType = "grow";
+                    buttonText = "START GROWING";
                 }
-            } else {
-                // Скрываем кнопку, если она видима
-                if (lastButtonState.isVisible) {
-                    tg.MainButton.hide();
-                    lastButtonState.isVisible = false;
+                
+                // Если состояние изменилось, обновляем кнопку
+                if (newType !== currentButtonState.type || character.id !== currentButtonState.characterId) {
+                    // Обновляем текущее состояние
+                    currentButtonState.type = newType;
+                    currentButtonState.characterId = character.id;
+                    
+                    // Обновляем обработчики
+                    setupButtonHandlers();
+                    
+                    // Обновляем текст и видимость
+                    if (newType !== "none") {
+                        tg.MainButton.setText(buttonText);
+                        tg.MainButton.show();
+                    } else {
+                        tg.MainButton.hide();
+                    }
                 }
+            } finally {
+                // Сбрасываем флаг обновления
+                setTimeout(() => {
+                    isUpdatingButton = false;
+                }, 100);
             }
         }
         
@@ -1055,19 +1119,24 @@
             }, 3000);
         }
         
-        // Сохранение игры
-        function saveGame() {
+        // Функция для дебаунсинга сохранения
+        const debouncedSave = debounce(() => {
             try {
                 const gameStateString = JSON.stringify(gameState);
                 localStorage.setItem('shmekDynasty', gameStateString);
                 
-                // Используем Telegram Web Data если доступно (это более новый API)
+                // Используем Telegram Web Data если доступно
                 if (tg.CloudStorage && tg.CloudStorage.setItem) {
                     tg.CloudStorage.setItem('shmekDynasty', gameStateString);
                 }
             } catch (error) {
                 console.error('Error saving game:', error);
             }
+        }, 500);
+        
+        // Сохранение игры
+        function saveGame() {
+            debouncedSave();
         }
         
         // Загрузка игры
@@ -1131,7 +1200,11 @@
             if (document.visibilityState === 'hidden') {
                 saveGame();
             } else {
-                updateUI();
+                // Обновляем UI и кнопку при возвращении в приложение
+                setTimeout(() => {
+                    updateUI();
+                    updateTelegramMainButton();
+                }, 100);
             }
         });
         
