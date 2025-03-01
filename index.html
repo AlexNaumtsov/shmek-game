@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SHMEK DYNASTY</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
@@ -13,12 +11,15 @@
             --primary: #1b5e20;
             --primary-light: #4caf50;
             --accent: #ffd54f;
-            --dark: #121212;
-            --dark-800: #181818;
-            --dark-600: #222222;
-            --light: #f5f5f5;
+            --dark: var(--tg-theme-bg-color, #121212);
+            --dark-800: var(--tg-theme-secondary-bg-color, #181818);
+            --light: var(--tg-theme-text-color, #f5f5f5);
+            --danger: #e53935;
             --success: #43a047;
+            --warning: #ffb300;
             --border-radius: 12px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            --transition: all 0.3s ease;
             --font: 'Exo 2', sans-serif;
         }
         
@@ -31,16 +32,43 @@
         }
         
         body {
-            background: var(--tg-theme-bg-color, var(--dark));
-            color: var(--tg-theme-text-color, var(--light));
+            background: var(--dark);
+            color: var(--light);
             min-height: 100vh;
-            padding: 16px;
+            overflow-x: hidden;
+            padding: 0;
             margin: 0;
+            overscroll-behavior: none;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 10% 10%, rgba(76, 175, 80, 0.1), transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(255, 213, 79, 0.1), transparent 40%),
+                var(--dark);
+            z-index: -1;
+        }
+        
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
         }
         
         .game-header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
         
         .game-logo {
@@ -51,6 +79,7 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .game-tagline {
@@ -58,22 +87,24 @@
             opacity: 0.8;
             margin-bottom: 12px;
         }
+
+        .card {
+            background: var(--dark-800);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
         
         .resources {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin-bottom: 20px;
-            background: var(--tg-theme-secondary-bg-color, var(--dark-800));
-            padding: 12px;
-            border-radius: var(--border-radius);
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
         }
         
         .resource {
             text-align: center;
-            padding: 8px;
-            background: var(--dark-600);
-            border-radius: 8px;
+            flex: 1;
         }
         
         .resource-icon {
@@ -82,57 +113,180 @@
         }
         
         .resource-value {
-            font-size: 1rem;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 1.1rem;
         }
         
         .resource-label {
             font-size: 0.7rem;
-            opacity: 0.7;
+            opacity: 0.8;
         }
         
-        .grow-progress {
-            background: var(--dark-600);
-            padding: 12px;
-            border-radius: var(--border-radius);
-            margin-bottom: 20px;
-        }
-        
-        .progress-header {
+        .character-tabs {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
+            overflow-x: auto;
+            gap: 8px;
+            padding: 8px 0;
+            scrollbar-width: none;
+        }
+        
+        .character-tabs::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .character-tab {
+            flex: 0 0 auto;
+            min-width: 80px;
+            height: 80px;
+            background: var(--dark-800);
+            border-radius: var(--border-radius);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        
+        .character-tab.active {
+            background: var(--primary);
+        }
+        
+        .character-tab.locked {
+            opacity: 0.6;
+        }
+        
+        .character-tab.locked::after {
+            content: '🔒';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+        }
+        
+        .character-icon {
+            font-size: 2rem;
+        }
+        
+        .character-name {
+            font-size: 0.7rem;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+        
+        .character-screens {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .character-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: var(--transition);
+            overflow-y: auto;
+            padding: 10px;
+            display: none;
+        }
+        
+        .character-screen.active {
+            opacity: 1;
+            transform: translateX(0);
+            display: block;
+        }
+        
+        .character-card {
+            background: var(--dark-800);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+        }
+        
+        .character-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .character-portrait {
+            font-size: 2.5rem;
+            margin-right: 12px;
+        }
+        
+        .character-info h3 {
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+        }
+        
+        .character-type {
+            font-size: 0.8rem;
+            opacity: 0.8;
         }
         
         .progress-bar {
-            height: 10px;
-            background: var(--dark);
-            border-radius: 5px;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            margin: 8px 0;
             overflow: hidden;
         }
         
         .progress-bar-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--primary), var(--primary-light));
-            width: 0%;
-            transition: width 0.3s;
+            width: 0;
+            background: var(--primary-light);
+            transition: width 0.3s ease-out;
         }
         
-        .game-actions {
+        .character-stats {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        
+        .character-stat {
+            background: rgba(0,0,0,0.2);
+            padding: 8px;
+            border-radius: 8px;
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+            opacity: 0.8;
+        }
+        
+        .stat-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
         }
         
         .action-btn {
-            padding: 12px 0;
+            flex: 1;
+            background: var(--primary);
+            color: var(--light);
             border: none;
             border-radius: var(--border-radius);
-            font-size: 1rem;
+            padding: 10px;
             font-weight: 600;
             cursor: pointer;
-            text-align: center;
-            color: white;
+            transition: var(--transition);
         }
         
         .action-btn:disabled {
@@ -140,250 +294,805 @@
             cursor: not-allowed;
         }
         
-        .btn-grow {
+        .action-btn:active {
+            transform: translateY(2px);
+        }
+        
+        .action-btn.harvest {
+            background: var(--warning);
+            color: #000;
+        }
+        
+        .action-btn.sell {
+            background: var(--success);
+        }
+        
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 12px;
+            background: var(--dark-800);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--light);
+            padding: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+        
+        .tab-btn.active {
             background: var(--primary);
         }
         
-        .btn-harvest {
-            background: #ffc107;
-            color: black;
+        .tab-content {
+            display: none;
         }
         
-        .btn-sell {
-            background: #03a9f4;
+        .tab-content.active {
+            display: block;
         }
         
-        .btn-special {
-            background: #9c27b0;
+        .bottom-nav {
+            display: flex;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            background: var(--dark-800);
+            padding: 10px;
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
         }
         
-        .log-area {
-            margin-top: 20px;
-            padding: 12px;
+        .nav-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .nav-icon {
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+        }
+        
+        .nav-label {
+            font-size: 0.7rem;
+        }
+        
+        #notifications {
+            position: fixed;
+            bottom: 70px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .notification {
             background: var(--dark-800);
             border-radius: var(--border-radius);
-            max-height: 150px;
-            overflow-y: auto;
-        }
-        
-        .log-entry {
-            padding: 8px 4px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            font-size: 0.85rem;
+            padding: 12px;
+            margin-bottom: 8px;
+            width: 90%;
+            max-width: 400px;
             display: flex;
-            align-items: center;
+            box-shadow: var(--shadow);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
         }
         
-        .log-icon {
-            margin-right: 8px;
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
         }
         
-        .log-message {
+        .notification.info {
+            border-left: 4px solid var(--info);
+        }
+        
+        .notification.success {
+            border-left: 4px solid var(--success);
+        }
+        
+        .notification.warning {
+            border-left: 4px solid var(--warning);
+        }
+        
+        .notification.error {
+            border-left: 4px solid var(--danger);
+        }
+        
+        .notification-icon {
+            margin-right: 12px;
+            font-size: 1.2rem;
+        }
+        
+        .notification-content {
             flex: 1;
+        }
+        
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .notification-message {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        .safe-area-bottom {
+            height: env(safe-area-inset-bottom, 0px);
+            width: 100%;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 8px;
+            }
+            
+            .bottom-nav {
+                padding-bottom: env(safe-area-inset-bottom, 0);
+            }
+            
+            .character-tab {
+                min-width: 70px;
+                height: 70px;
+            }
+            
+            .action-btn {
+                padding: 8px;
+                font-size: 0.8rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="game-header">
-        <h1 class="game-logo">SHMEK DYNASTY</h1>
-        <div class="game-tagline">Build Your Cannabis Empire</div>
-    </div>
-    
-    <div class="resources">
-        <div class="resource">
-            <div class="resource-icon">💰</div>
-            <div class="resource-value"><span id="coins">1000</span></div>
-            <div class="resource-label">Coins</div>
+    <div class="container">
+        <div class="game-header">
+            <h1 class="game-logo">SHMEK DYNASTY</h1>
+            <div class="game-tagline">Build Your Cannabis Empire</div>
         </div>
-        <div class="resource">
-            <div class="resource-icon">🌿</div>
-            <div class="resource-value"><span id="weed">0</span></div>
-            <div class="resource-label">Weed</div>
+        
+        <!-- Resources -->
+        <div class="card">
+            <div class="resources">
+                <div class="resource">
+                    <div class="resource-icon">💰</div>
+                    <div class="resource-value"><span id="coins">1000</span></div>
+                    <div class="resource-label">Coins</div>
+                </div>
+                <div class="resource">
+                    <div class="resource-icon">🌿</div>
+                    <div class="resource-value"><span id="weed">0</span></div>
+                    <div class="resource-label">Weed</div>
+                </div>
+                <div class="resource">
+                    <div class="resource-icon">⚗️</div>
+                    <div class="resource-value"><span id="research">0</span></div>
+                    <div class="resource-label">Research</div>
+                </div>
+                <div class="resource">
+                    <div class="resource-icon">✨</div>
+                    <div class="resource-value"><span id="prestige">0</span></div>
+                    <div class="resource-label">Prestige</div>
+                </div>
+            </div>
         </div>
-        <div class="resource">
-            <div class="resource-icon">⚗️</div>
-            <div class="resource-value"><span id="research">0</span></div>
-            <div class="resource-label">Research</div>
+        
+        <!-- Character Tabs -->
+        <div class="character-tabs" id="character-tabs">
+            <!-- Заполняется динамически -->
         </div>
-        <div class="resource">
-            <div class="resource-icon">✨</div>
-            <div class="resource-value"><span id="level">1</span></div>
-            <div class="resource-label">Level</div>
+        
+        <!-- Character Screens -->
+        <div class="character-screens" id="character-screens">
+            <!-- Заполняется динамически -->
         </div>
-    </div>
-    
-    <div class="grow-progress">
-        <div class="progress-header">
-            <div>Growing Progress</div>
-            <div id="progress-value">0%</div>
-        </div>
-        <div class="progress-bar">
-            <div class="progress-bar-fill" id="progress-bar"></div>
-        </div>
-    </div>
-    
-    <div class="game-actions">
-        <button class="action-btn btn-grow" id="btn-grow">Grow 🌱</button>
-        <button class="action-btn btn-harvest" id="btn-harvest" disabled>Harvest ✂️</button>
-        <button class="action-btn btn-sell" id="btn-sell" disabled>Sell 💰</button>
-        <button class="action-btn btn-special" id="btn-special">Special ✨</button>
-    </div>
-    
-    <div class="log-area" id="log-area">
-        <div class="log-entry">
-            <div class="log-icon">📱</div>
-            <div class="log-message">Welcome to SHMEK DYNASTY!</div>
-        </div>
+        
+        <!-- Notifications area -->
+        <div id="notifications"></div>
+        <div class="safe-area-bottom"></div>
     </div>
     
     <script>
-        // Получаем WebApp Telegram, если он доступен
-        const tg = window.Telegram?.WebApp;
+        // Инициализация Telegram WebApp
+        let tg = window.Telegram.WebApp;
         
-        // Переменные состояния игры
-        let coins = 1000;
-        let weed = 0;
-        let research = 0;
-        let level = 1;
-        let growProgress = 0;
-        let isHarvestReady = false;
-        let hasInventory = false;
+        // Сообщаем Telegram, что приложение готово к отображению
+        tg.ready();
         
-        // DOM элементы
-        const coinsEl = document.getElementById('coins');
-        const weedEl = document.getElementById('weed');
-        const researchEl = document.getElementById('research');
-        const levelEl = document.getElementById('level');
-        const progressBarEl = document.getElementById('progress-bar');
-        const progressValueEl = document.getElementById('progress-value');
-        const btnGrow = document.getElementById('btn-grow');
-        const btnHarvest = document.getElementById('btn-harvest');
-        const btnSell = document.getElementById('btn-sell');
-        const btnSpecial = document.getElementById('btn-special');
-        const logArea = document.getElementById('log-area');
+        // Расширяем WebApp на всю высоту
+        tg.expand();
         
-        // Инициализация
-        function init() {
-            // Настраиваем Telegram API, если доступно
-            if (tg) {
-                try {
-                    tg.ready();
-                    tg.expand();
-                } catch (e) {
-                    console.log('Telegram API error:', e);
+        // Устанавливаем стиль шапки в соответствии с темой Telegram
+        tg.setHeaderColor(tg.themeParams.bg_color || "#121212");
+        
+        // Включаем навигационную панель в соответствии с цветами темы
+        tg.setBackgroundColor(tg.themeParams.bg_color || "#121212");
+        
+        // Базовые данные персонажей
+        const characterData = [
+            {
+                id: 1,
+                name: "Dude",
+                icon: "🧑",
+                type: "Beginner Grower",
+                unlocked: true,
+                price: 0,
+                growSpeed: 1,
+                yieldMultiplier: 1,
+                sellPrice: 10,
+                description: "Your first character. A beginner with basic growing skills.",
+                progress: {
+                    grow: 0,
+                    harvest: 0,
+                    inventory: 0
+                }
+            },
+            {
+                id: 2,
+                name: "Hippie",
+                icon: "🧔",
+                type: "Experienced Grower",
+                unlocked: false,
+                price: 5000,
+                growSpeed: 1.5,
+                yieldMultiplier: 1.2,
+                sellPrice: 12,
+                description: "An experienced grower with better techniques.",
+                progress: {
+                    grow: 0,
+                    harvest: 0,
+                    inventory: 0
+                }
+            },
+            {
+                id: 3,
+                name: "Scientist",
+                icon: "👨‍🔬",
+                type: "Master Botanist",
+                unlocked: false,
+                price: 20000,
+                growSpeed: 2,
+                yieldMultiplier: 1.5,
+                sellPrice: 15,
+                description: "A botanist with scientific knowledge for optimal growth.",
+                progress: {
+                    grow: 0,
+                    harvest: 0,
+                    inventory: 0
+                }
+            },
+            {
+                id: 4,
+                name: "Dealer",
+                icon: "🕴️",
+                type: "Professional Seller",
+                unlocked: false,
+                price: 50000,
+                growSpeed: 1.8,
+                yieldMultiplier: 1.3,
+                sellPrice: 20,
+                description: "A professional with great sales skills.",
+                progress: {
+                    grow: 0,
+                    harvest: 0,
+                    inventory: 0
                 }
             }
-            
-            // Устанавливаем обработчики событий
-            btnGrow.addEventListener('click', grow);
-            btnHarvest.addEventListener('click', harvest);
-            btnSell.addEventListener('click', sell);
-            btnSpecial.addEventListener('click', special);
-            
-            // Добавляем сообщение в лог
-            addLogMessage('Game started!', '🎮');
-        }
+        ];
         
-        // Обновление интерфейса
-        function updateUI() {
-            coinsEl.textContent = coins;
-            weedEl.textContent = weed;
-            researchEl.textContent = research;
-            levelEl.textContent = level;
+        // Игровое состояние
+        const gameState = {
+            coins: 1000,
+            weed: 0,
+            research: 0,
+            prestige: 0,
+            empireLevel: 1,
+            totalHarvested: 0,
+            totalSold: 0,
+            researchLevels: {
+                growSpeed: 0,
+                yieldMultiplier: 0,
+                sellPrice: 0,
+                autoGrow: 0
+            },
+            activeCharacter: 1,
+            activeTab: 'characters',
+            characterData: characterData
+        };
+        
+        // Инициализация игры
+        function initGame() {
+            // Пытаемся загрузить сохраненную игру
+            loadGame();
             
-            const progressPercent = Math.floor(growProgress * 100);
-            progressBarEl.style.width = `${progressPercent}%`;
-            progressValueEl.textContent = `${progressPercent}%`;
-            
-            // Обновляем кнопки
-            btnGrow.disabled = growProgress >= 1;
-            btnHarvest.disabled = growProgress < 1 || isHarvestReady;
-            btnSell.disabled = !isHarvestReady || !hasInventory;
-        }
-        
-        // Функция выращивания
-        function grow() {
-            if (growProgress < 1) {
-                growProgress += 0.2;
-                if (growProgress > 1) growProgress = 1;
-                
-                updateUI();
-                
-                if (growProgress < 1) {
-                    addLogMessage('Growing plants...', '🌱');
-                } else {
-                    addLogMessage('Plants are ready to harvest!', '🌿');
-                }
-            }
-        }
-        
-        // Функция сбора урожая
-        function harvest() {
-            if (growProgress >= 1 && !isHarvestReady) {
-                growProgress = 0;
-                isHarvestReady = true;
-                hasInventory = true;
-                
-                updateUI();
-                addLogMessage('Harvested some quality weed!', '✂️');
-            }
-        }
-        
-        // Функция продажи
-        function sell() {
-            if (isHarvestReady && hasInventory) {
-                const profit = 100 + Math.floor(Math.random() * 50);
-                coins += profit;
-                weed += 10;
-                isHarvestReady = false;
-                hasInventory = false;
-                
-                updateUI();
-                addLogMessage(`Sold batch for ${profit} coins!`, '💰');
-                
-                // Уровень повышается каждые 1000 монет
-                if (coins >= level * 1000 && level < 10) {
-                    level++;
-                    addLogMessage(`Level up! You are now level ${level}`, '🎖️');
-                }
-            }
-        }
-        
-        // Функция специального действия
-        function special() {
-            const researchPoints = 5 + Math.floor(Math.random() * 5);
-            research += researchPoints;
-            
+            // Обновляем UI
             updateUI();
-            addLogMessage(`Gained ${researchPoints} research points`, '✨');
+            createCharacterTabs();
+            createCharacterScreens();
+            
+            // Устанавливаем интервал для автоматического обновления
+            setInterval(updateGame, 1000);
+            
+            // Показываем приветственное уведомление
+            showNotification('Welcome to SHMEK DYNASTY!', 'Build your cannabis empire!', 'info');
+            
+            // Отображаем кнопку Main Button в Telegram для главных действий
+            tg.MainButton.setText('START GROWING');
+            tg.MainButton.onClick(() => {
+                const character = gameState.characterData.find(c => c.id === gameState.activeCharacter);
+                if (character && character.unlocked) {
+                    performAction('grow', character.id);
+                }
+            });
+            tg.MainButton.show();
         }
         
-        // Добавление сообщения в лог
-        function addLogMessage(message, icon = '📝') {
-            const logEntry = document.createElement('div');
-            logEntry.className = 'log-entry';
+        // Обновление игры (вызывается каждую секунду)
+        function updateGame() {
+            // Обновляем прогресс всех персонажей с auto-grow
+            if (gameState.researchLevels.autoGrow > 0) {
+                gameState.characterData.forEach(character => {
+                    if (character.unlocked && character.progress.grow < 1) {
+                        const autoGrowSpeed = 0.05 * gameState.researchLevels.autoGrow;
+                        character.progress.grow += character.growSpeed * autoGrowSpeed / 100;
+                        if (character.progress.grow >= 1) {
+                            character.progress.grow = 1;
+                        }
+                    }
+                });
+            }
             
-            const logIcon = document.createElement('div');
-            logIcon.className = 'log-icon';
-            logIcon.textContent = icon;
+            // Обновляем UI
+            updateUI();
             
-            const logMessage = document.createElement('div');
-            logMessage.className = 'log-message';
-            logMessage.textContent = message;
+            // Обновляем главную кнопку Telegram
+            updateTelegramMainButton();
             
-            logEntry.appendChild(logIcon);
-            logEntry.appendChild(logMessage);
-            
-            logArea.insertBefore(logEntry, logArea.firstChild);
-            
-            // Ограничиваем количество сообщений
-            if (logArea.children.length > 10) {
-                logArea.removeChild(logArea.lastChild);
+            // Сохраняем игру каждые 30 секунд
+            if (Math.floor(Date.now() / 1000) % 30 === 0) {
+                saveGame();
             }
         }
         
-        // Инициализируем игру
-        document.addEventListener('DOMContentLoaded', init);
+        // Создание вкладок персонажей
+        function createCharacterTabs() {
+            const tabsContainer = document.getElementById('character-tabs');
+            tabsContainer.innerHTML = '';
+            
+            gameState.characterData.forEach(character => {
+                const tab = document.createElement('div');
+                tab.className = `character-tab ${character.unlocked ? '' : 'locked'} ${character.id === gameState.activeCharacter ? 'active' : ''}`;
+                tab.dataset.characterId = character.id;
+                
+                tab.innerHTML = `
+                    <div class="character-icon">${character.icon}</div>
+                    <div class="character-name">${character.name}</div>
+                `;
+                
+                tab.addEventListener('click', () => {
+                    if (character.unlocked) {
+                        switchCharacter(character.id);
+                    } else {
+                        tryUnlockCharacter(character.id);
+                    }
+                });
+                
+                tabsContainer.appendChild(tab);
+            });
+        }
+        
+        // Создание экранов персонажей
+        function createCharacterScreens() {
+            const screensContainer = document.getElementById('character-screens');
+            screensContainer.innerHTML = '';
+            
+            gameState.characterData.forEach(character => {
+                const screen = document.createElement('div');
+                screen.className = `character-screen ${character.id === gameState.activeCharacter ? 'active' : ''}`;
+                screen.dataset.characterId = character.id;
+                
+                if (character.unlocked) {
+                    screen.innerHTML = `
+                        <div class="character-card">
+                            <div class="character-header">
+                                <div class="character-portrait">${character.icon}</div>
+                                <div class="character-info">
+                                    <h3>${character.name}</h3>
+                                    <div class="character-type">${character.type}</div>
+                                </div>
+                            </div>
+                            
+                            <p>${character.description}</p>
+                            
+                            <div class="character-stats">
+                                <div class="character-stat">
+                                    <div class="stat-label">Grow Speed</div>
+                                    <div class="stat-value">${(character.growSpeed * (1 + gameState.researchLevels.growSpeed * 0.1)).toFixed(1)}x</div>
+                                </div>
+                                <div class="character-stat">
+                                    <div class="stat-label">Yield Multiplier</div>
+                                    <div class="stat-value">${(character.yieldMultiplier * (1 + gameState.researchLevels.yieldMultiplier * 0.1)).toFixed(1)}x</div>
+                                </div>
+                                <div class="character-stat">
+                                    <div class="stat-label">Sell Price</div>
+                                    <div class="stat-value">$${(character.sellPrice * (1 + gameState.researchLevels.sellPrice * 0.1)).toFixed(1)}</div>
+                                </div>
+                                <div class="character-stat">
+                                    <div class="stat-label">Inventory</div>
+                                    <div class="stat-value">${character.progress.inventory.toFixed(1)} units</div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 16px;">
+                                <div class="stat-label">Growing Progress</div>
+                                <div class="progress-bar">
+                                    <div class="progress-bar-fill" style="width: ${character.progress.grow * 100}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 16px;">
+                                <div class="stat-label">Harvest Progress</div>
+                                <div class="progress-bar">
+                                    <div class="progress-bar-fill" style="width: ${character.progress.harvest * 100}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="action-buttons">
+                                <button class="action-btn grow" onclick="performAction('grow', ${character.id})" ${character.progress.grow >= 1 ? 'disabled' : ''}>Grow</button>
+                                <button class="action-btn harvest" onclick="performAction('harvest', ${character.id})" ${character.progress.grow < 1 || character.progress.harvest >= 1 ? 'disabled' : ''}>Harvest</button>
+                                <button class="action-btn sell" onclick="performAction('sell', ${character.id})" ${character.progress.inventory <= 0 ? 'disabled' : ''}>Sell</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    screen.innerHTML = `
+                        <div class="character-card">
+                            <div class="character-header">
+                                <div class="character-portrait">${character.icon}</div>
+                                <div class="character-info">
+                                    <h3>${character.name}</h3>
+                                    <div class="character-type">${character.type}</div>
+                                </div>
+                            </div>
+                            
+                            <p>${character.description}</p>
+                            
+                            <div class="character-stats">
+                                <div class="character-stat">
+                                    <div class="stat-label">Grow Speed</div>
+                                    <div class="stat-value">${character.growSpeed.toFixed(1)}x</div>
+                                </div>
+                                <div class="character-stat">
+                                    <div class="stat-label">Yield Multiplier</div>
+                                    <div class="stat-value">${character.yieldMultiplier.toFixed(1)}x</div>
+                                </div>
+                                <div class="character-stat">
+                                    <div class="stat-label">Sell Price</div>
+                                    <div class="stat-value">$${character.sellPrice.toFixed(1)}</div>
+                                </div>
+                                <div class="character-stat">
+                                    <div class="stat-label">Unlock Price</div>
+                                    <div class="stat-value">$${character.price}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="action-buttons">
+                                <button class="action-btn" onclick="tryUnlockCharacter(${character.id})">Unlock for $${character.price}</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                screensContainer.appendChild(screen);
+            });
+        }
+        
+        // Обновление UI
+        function updateUI() {
+            // Обновляем отображение ресурсов
+            document.getElementById('coins').textContent = Math.floor(gameState.coins);
+            document.getElementById('weed').textContent = Math.floor(gameState.weed);
+            document.getElementById('research').textContent = Math.floor(gameState.research);
+            document.getElementById('prestige').textContent = Math.floor(gameState.prestige);
+            
+            // Обновляем прогресс-бары и кнопки на активном экране
+            const activeCharacter = gameState.characterData.find(c => c.id === gameState.activeCharacter);
+            if (activeCharacter && activeCharacter.unlocked) {
+                const activeScreen = document.querySelector(`.character-screen[data-character-id="${gameState.activeCharacter}"]`);
+                if (activeScreen) {
+                    const growBar = activeScreen.querySelector('.progress-bar-fill:nth-of-type(1)');
+                    if (growBar) growBar.style.width = `${activeCharacter.progress.grow * 100}%`;
+                    
+                    const harvestBar = activeScreen.querySelector('.progress-bar-fill:nth-of-type(2)');
+                    if (harvestBar) harvestBar.style.width = `${activeCharacter.progress.harvest * 100}%`;
+                    
+                    const growBtn = activeScreen.querySelector('.action-btn.grow');
+                    if (growBtn) growBtn.disabled = activeCharacter.progress.grow >= 1;
+                    
+                    const harvestBtn = activeScreen.querySelector('.action-btn.harvest');
+                    if (harvestBtn) harvestBtn.disabled = activeCharacter.progress.grow < 1 || activeCharacter.progress.harvest >= 1;
+                    
+                    const sellBtn = activeScreen.querySelector('.action-btn.sell');
+                    if (sellBtn) sellBtn.disabled = activeCharacter.progress.inventory <= 0;
+                }
+            }
+        }
+        
+        // Выполнение действия (grow, harvest, sell)
+        function performAction(action, characterId) {
+            const character = gameState.characterData.find(c => c.id === characterId);
+            
+            if (character && character.unlocked) {
+                switch (action) {
+                    case 'grow':
+                        if (character.progress.grow < 1) {
+                            const growSpeedMultiplier = 1 + gameState.researchLevels.growSpeed * 0.1;
+                            character.progress.grow = 1;
+                            character.progress.harvest = 0;
+                            showNotification('Growing Started', `${character.name} started growing weed!`, 'info');
+                        }
+                        break;
+                        
+                    case 'harvest':
+                        if (character.progress.grow >= 1 && character.progress.harvest < 1) {
+                            const yieldMultiplier = character.yieldMultiplier * (1 + gameState.researchLevels.yieldMultiplier * 0.1);
+                            const harvestAmount = 10 * yieldMultiplier;
+                            character.progress.harvest = 1;
+                            character.progress.inventory += harvestAmount;
+                            gameState.totalHarvested += harvestAmount;
+                            gameState.weed += harvestAmount;
+                            
+                            showNotification('Harvest Complete', `${character.name} harvested ${harvestAmount.toFixed(1)} weed!`, 'success');
+                        }
+                        break;
+                        
+                    case 'sell':
+                        if (character.progress.inventory > 0) {
+                            const sellPrice = character.sellPrice * (1 + gameState.researchLevels.sellPrice * 0.1);
+                            const revenue = character.progress.inventory * sellPrice;
+                            
+                            gameState.coins += revenue;
+                            gameState.totalSold += character.progress.inventory;
+                            character.progress.inventory = 0;
+                            
+                            showNotification('Sale Complete', `${character.name} sold weed for $${revenue.toFixed(1)}!`, 'success');
+                            
+                            // Обновляем прогресс выращивания, чтобы можно было начать новый цикл
+                            character.progress.grow = 0;
+                        }
+                        break;
+                }
+                
+                // Обновляем UI
+                updateUI();
+                
+                // Обновляем главную кнопку Telegram
+                updateTelegramMainButton();
+            }
+        }
+        
+        // Попытка разблокировки персонажа
+        function tryUnlockCharacter(characterId) {
+            const character = gameState.characterData.find(c => c.id === characterId);
+            
+            if (character && !character.unlocked && gameState.coins >= character.price) {
+                gameState.coins -= character.price;
+                character.unlocked = true;
+                
+                showNotification('Character Unlocked', `You unlocked ${character.name}!`, 'success');
+                
+                // Обновляем вкладки и экраны
+                createCharacterTabs();
+                createCharacterScreens();
+                
+                // Переключаемся на нового персонажа
+                switchCharacter(characterId);
+            } else if (character && !character.unlocked) {
+                showNotification('Not Enough Coins', `You need ${character.price - gameState.coins} more coins to unlock ${character.name}.`, 'warning');
+            }
+        }
+        
+        // Переключение персонажа
+        function switchCharacter(characterId) {
+            gameState.activeCharacter = characterId;
+            
+            // Обновляем вкладки
+            const characterTabs = document.querySelectorAll('.character-tab');
+            characterTabs.forEach(tab => {
+                tab.classList.toggle('active', parseInt(tab.dataset.characterId) === characterId);
+            });
+            
+            // Обновляем экраны
+            const characterScreens = document.querySelectorAll('.character-screen');
+            characterScreens.forEach(screen => {
+                screen.classList.toggle('active', parseInt(screen.dataset.characterId) === characterId);
+            });
+            
+            // Обновляем кнопку Telegram
+            updateTelegramMainButton();
+        }
+        
+        // Обновление главной кнопки Telegram
+        function updateTelegramMainButton() {
+            const character = gameState.characterData.find(c => c.id === gameState.activeCharacter);
+            
+            if (character && character.unlocked) {
+                if (character.progress.grow >= 1 && character.progress.harvest < 1) {
+                    tg.MainButton.setText('HARVEST NOW');
+                    tg.MainButton.show();
+                    tg.MainButton.onClick(() => performAction('harvest', character.id));
+                } else if (character.progress.harvest >= 1 && character.progress.inventory > 0) {
+                    tg.MainButton.setText('SELL WEED');
+                    tg.MainButton.show();
+                    tg.MainButton.onClick(() => performAction('sell', character.id));
+                } else if (character.progress.grow < 1) {
+                    tg.MainButton.setText('START GROWING');
+                    tg.MainButton.show();
+                    tg.MainButton.onClick(() => performAction('grow', character.id));
+                } else {
+                    tg.MainButton.hide();
+                }
+            } else {
+                tg.MainButton.hide();
+            }
+        }
+        
+        // Отображение уведомления
+        function showNotification(title, message, type = 'info') {
+            // Для важных уведомлений используем нативные уведомления Telegram
+            if (type === 'error') {
+                tg.showPopup({
+                    title: title,
+                    message: message,
+                    buttons: [{ type: 'ok' }]
+                });
+                return;
+            }
+            
+            const notifications = document.getElementById('notifications');
+            
+            // Создаем уведомление
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            
+            let icon = '';
+            switch (type) {
+                case 'success':
+                    icon = '✅';
+                    break;
+                case 'error':
+                    icon = '❌';
+                    break;
+                case 'warning':
+                    icon = '⚠️';
+                    break;
+                default:
+                    icon = 'ℹ️';
+            }
+            
+            notification.innerHTML = `
+                <div class="notification-icon">${icon}</div>
+                <div class="notification-content">
+                    <div class="notification-title">${title}</div>
+                    <div class="notification-message">${message}</div>
+                </div>
+            `;
+            
+            notifications.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+        
+        // Сохранение игры
+        function saveGame() {
+            try {
+                const gameStateString = JSON.stringify(gameState);
+                localStorage.setItem('shmekDynasty', gameStateString);
+                
+                // Используем Telegram Web Data если доступно (это более новый API)
+                if (tg.CloudStorage && tg.CloudStorage.setItem) {
+                    tg.CloudStorage.setItem('shmekDynasty', gameStateString);
+                }
+            } catch (error) {
+                console.error('Error saving game:', error);
+            }
+        }
+        
+        // Загрузка игры
+        function loadGame() {
+            try {
+                // Сначала пробуем загрузить из localStorage
+                const savedGame = localStorage.getItem('shmekDynasty');
+                if (savedGame) {
+                    applyLoadedGameState(savedGame);
+                }
+                
+                // Затем пробуем получить из Telegram Cloud Storage если доступно
+                if (tg.CloudStorage && tg.CloudStorage.getItem) {
+                    tg.CloudStorage.getItem('shmekDynasty', (error, data) => {
+                        if (!error && data) {
+                            applyLoadedGameState(data);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading game:', error);
+            }
+        }
+        
+        // Применение загруженного состояния игры
+        function applyLoadedGameState(savedGameString) {
+            try {
+                const parsedGame = JSON.parse(savedGameString);
+                
+                // Обновляем основные ресурсы
+                gameState.coins = parsedGame.coins || gameState.coins;
+                gameState.weed = parsedGame.weed || gameState.weed;
+                gameState.research = parsedGame.research || gameState.research;
+                gameState.prestige = parsedGame.prestige || gameState.prestige;
+                
+                // Обновляем прогресс
+                gameState.empireLevel = parsedGame.empireLevel || gameState.empireLevel;
+                gameState.totalHarvested = parsedGame.totalHarvested || gameState.totalHarvested;
+                gameState.totalSold = parsedGame.totalSold || gameState.totalSold;
+                
+                // Обновляем уровни исследований
+                if (parsedGame.researchLevels) {
+                    gameState.researchLevels = parsedGame.researchLevels;
+                }
+                
+                // Обновляем активного персонажа и вкладку
+                gameState.activeCharacter = parsedGame.activeCharacter || gameState.activeCharacter;
+                gameState.activeTab = parsedGame.activeTab || gameState.activeTab;
+                
+                // Обновляем данные персонажей
+                if (parsedGame.characterData) {
+                    gameState.characterData = parsedGame.characterData;
+                }
+            } catch (error) {
+                console.error('Error parsing saved game:', error);
+            }
+        }
+        
+        // Обработчики событий Telegram
+        window.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                saveGame();
+            } else {
+                updateUI();
+            }
+        });
+        
+        window.addEventListener('beforeunload', saveGame);
+        
+        // Запуск игры при загрузке страницы
+        document.addEventListener('DOMContentLoaded', initGame);
     </script>
 </body>
 </html>
