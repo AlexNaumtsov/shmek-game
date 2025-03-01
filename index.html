@@ -18,6 +18,7 @@
             --success: #43a047;
             --warning: #ffb300;
             --info: #0288d1;
+            --purple: #9c27b0;
             --border-radius: 12px;
             --shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             --transition: all 0.3s ease;
@@ -306,6 +307,12 @@
         
         .action-btn.sell {
             background: var(--success);
+        }
+        
+        .select-strain-button {
+            background: var(--purple) !important;
+            width: 100%;
+            margin-top: 12px;
         }
         
         /* Добавляем собственную кнопку вместо Telegram MainButton */
@@ -1346,6 +1353,7 @@
 
         // Открыть модальное окно выбора сортов
         function openStrainModal(characterId) {
+            console.log("Opening strain modal for character ID:", characterId);
             activeCharacterForStrainSelect = characterId;
             const character = gameState.characterData.find(c => c.id === characterId);
             
@@ -1355,16 +1363,33 @@
                 return;
             }
             
+            // Принудительно обновляем список сортов
+            updateStrainList();
+            
             // Обновляем выбранный сорт
             updateSelectedStrain(character ? character.currentStrain : 1);
             
-            // Показываем модальное окно
-            document.getElementById('strainModal').classList.add('active');
+            // Явно устанавливаем display: block для модального окна
+            const modal = document.getElementById('strainModal');
+            modal.style.display = 'block';
+            
+            // Добавляем класс active для анимации
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
+            
+            // Показываем уведомление для подтверждения
+            showNotification('Выбор сорта', 'Выберите сорт для выращивания', 'info');
         }
 
-        // Закрыть модальное окно выбора сортов
+        // Закрытие модального окна
         function closeStrainModal() {
-            document.getElementById('strainModal').classList.remove('active');
+            const modal = document.getElementById('strainModal');
+            modal.classList.remove('active');
+            // Устанавливаем display: none после окончания анимации
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
             activeCharacterForStrainSelect = null;
         }
 
@@ -1518,23 +1543,38 @@
             let strainIndicator = activeScreen.querySelector('.character-strain-indicator');
             
             if (!strainIndicator) {
-                // Если индикатора нет, создаем его
-                const template = document.getElementById('character-strain-template').innerHTML;
-                const html = template
-                    .replace('{{characterId}}', character.id)
-                    .replace('{{strainIcon}}', strain.icon)
-                    .replace('{{strainName}}', strain.name)
-                    .replace('{{strainType}}', strain.type);
-                
-                // Создаем элемент и вставляем после character-stats
+                // Создаем элемент индикатора сорта напрямую без шаблона
                 strainIndicator = document.createElement('div');
-                strainIndicator.innerHTML = html;
-                characterStatsElement.insertAdjacentElement('afterend', strainIndicator.firstChild);
+                strainIndicator.className = 'character-strain-indicator';
+                
+                strainIndicator.innerHTML = `
+                    <div class="character-strain-icon">${strain.icon}</div>
+                    <div class="character-strain-info">
+                        <div class="character-strain-name">${strain.name}</div>
+                        <div class="character-strain-type">${strain.type}</div>
+                    </div>
+                    <button class="character-strain-change">Изменить</button>
+                `;
+                
+                // Добавляем обработчик события напрямую
+                strainIndicator.addEventListener('click', function() {
+                    openStrainModal(character.id);
+                });
+                
+                // Вставляем после character-stats
+                characterStatsElement.insertAdjacentElement('afterend', strainIndicator);
             } else {
                 // Если индикатор уже есть, обновляем его данные
                 strainIndicator.querySelector('.character-strain-icon').textContent = strain.icon;
                 strainIndicator.querySelector('.character-strain-name').textContent = strain.name;
                 strainIndicator.querySelector('.character-strain-type').textContent = strain.type;
+                
+                // Удаляем старый обработчик и добавляем новый
+                const newStrainIndicator = strainIndicator.cloneNode(true);
+                newStrainIndicator.addEventListener('click', function() {
+                    openStrainModal(character.id);
+                });
+                strainIndicator.parentNode.replaceChild(newStrainIndicator, strainIndicator);
             }
             
             // Обновляем также текст кнопок действий, если растение растет
@@ -1573,6 +1613,26 @@
                         const stageThreshold = (index + 1) / stages.length;
                         stage.classList.toggle('active', progress >= stageThreshold);
                     });
+                }
+            }
+            
+            // Добавляем отдельную, хорошо заметную кнопку для выбора сорта
+            if (!activeScreen.querySelector('.select-strain-button')) {
+                const selectButton = document.createElement('button');
+                selectButton.className = 'action-btn select-strain-button';
+                selectButton.textContent = 'Выбрать другой сорт';
+                selectButton.style.marginTop = '12px';
+                selectButton.style.backgroundColor = '#9c27b0'; // Фиолетовый цвет для выделения
+                selectButton.style.width = '100%';
+                
+                selectButton.addEventListener('click', function() {
+                    openStrainModal(character.id);
+                });
+                
+                // Находим блок action-buttons и добавляем после него нашу кнопку
+                const actionButtons = activeScreen.querySelector('.action-buttons');
+                if (actionButtons) {
+                    actionButtons.insertAdjacentElement('afterend', selectButton);
                 }
             }
         }
