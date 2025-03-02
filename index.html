@@ -2255,6 +2255,1148 @@
         
         // Запуск игры при загрузке страницы
         document.addEventListener('DOMContentLoaded', initGame);
+       
+// Add these new features to the end of your script tag, before the closing </script> tag
+
+// =========== ACHIEVEMENTS SYSTEM ===========
+const achievements = [
+    {
+        id: 1,
+        name: "First Harvest",
+        description: "Harvest your first plant",
+        icon: "🌱",
+        condition: (state) => state.totalHarvested > 0,
+        reward: 100, // coins
+        unlocked: false
+    },
+    {
+        id: 2,
+        name: "Strain Collector",
+        description: "Unlock 3 different strains",
+        icon: "🧪",
+        condition: (state) => state.unlockedStrains.length >= 3,
+        reward: 500,
+        unlocked: false
+    },
+    {
+        id: 3,
+        name: "Entrepreneur",
+        description: "Earn 10,000 coins in total",
+        icon: "💰",
+        condition: (state) => state.totalSold * 10 >= 10000, // Approximation for total earnings
+        reward: 1000,
+        unlocked: false
+    },
+    {
+        id: 4,
+        name: "Master Grower",
+        description: "Harvest 100 units of weed",
+        icon: "🏆",
+        condition: (state) => state.totalHarvested >= 100,
+        reward: 2000,
+        unlocked: false
+    },
+    {
+        id: 5,
+        name: "Empire Builder",
+        description: "Unlock all characters",
+        icon: "👑",
+        condition: (state) => state.characterData.every(char => char.unlocked),
+        reward: 5000,
+        unlocked: false
+    },
+    {
+        id: 6,
+        name: "Strain Master",
+        description: "Unlock a legendary strain",
+        icon: "⭐",
+        condition: (state) => state.unlockedStrains.includes(10), // ID of Acapulco Gold (legendary)
+        reward: 10000,
+        unlocked: false
+    }
+];
+
+// Function to check achievements
+function checkAchievements(gameState) {
+    let earnedAchievements = [];
+    
+    if (!gameState.achievements) {
+        gameState.achievements = [...achievements];
+    }
+    
+    gameState.achievements.forEach(achievement => {
+        if (!achievement.unlocked && achievement.condition(gameState)) {
+            achievement.unlocked = true;
+            gameState.coins += achievement.reward;
+            earnedAchievements.push(achievement);
+        }
+    });
+    
+    return earnedAchievements;
+}
+
+// =========== STATISTICS SYSTEM ===========
+function initStatistics(gameState) {
+    if (!gameState.statistics) {
+        gameState.statistics = {
+            startDate: new Date().toISOString(),
+            playTime: 0,
+            lastPlayTime: Date.now(),
+            harvestCount: 0,
+            salesCount: 0,
+            unlockedCharacters: 0,
+            unlockedStrains: 0,
+            achievementsUnlocked: 0,
+            highestSingleSale: 0,
+            highestSingleHarvest: 0,
+            strainsFavored: {} // Track which strains are used most
+        };
+    }
+}
+
+function updateStatistics(gameState, action, amount, strainId) {
+    if (!gameState.statistics) {
+        initStatistics(gameState);
+    }
+    
+    // Update play time
+    const now = Date.now();
+    gameState.statistics.playTime += (now - gameState.statistics.lastPlayTime) / 1000;
+    gameState.statistics.lastPlayTime = now;
+    
+    // Update action-specific stats
+    switch (action) {
+        case 'harvest':
+            gameState.statistics.harvestCount++;
+            if (amount > gameState.statistics.highestSingleHarvest) {
+                gameState.statistics.highestSingleHarvest = amount;
+            }
+            break;
+        case 'sell':
+            gameState.statistics.salesCount++;
+            if (amount > gameState.statistics.highestSingleSale) {
+                gameState.statistics.highestSingleSale = amount;
+            }
+            break;
+        case 'unlockCharacter':
+            gameState.statistics.unlockedCharacters = gameState.characterData.filter(c => c.unlocked).length;
+            break;
+        case 'unlockStrain':
+            gameState.statistics.unlockedStrains = gameState.unlockedStrains.length;
+            break;
+        case 'achievement':
+            gameState.statistics.achievementsUnlocked = gameState.achievements.filter(a => a.unlocked).length;
+            break;
+        case 'growStrain':
+            // Track strain usage
+            if (!gameState.statistics.strainsFavored[strainId]) {
+                gameState.statistics.strainsFavored[strainId] = 0;
+            }
+            gameState.statistics.strainsFavored[strainId]++;
+            break;
+    }
+}
+
+// =========== ADVANCED RESEARCH SYSTEM ===========
+// Expand research system with more options
+const researchUpgrades = [
+    {
+        id: 'growSpeed',
+        name: 'Grow Speed',
+        description: 'Increases growing speed by 10% per level',
+        basePrice: 500,
+        priceMultiplier: 1.5,
+        maxLevel: 10,
+        getPrice: function(level) {
+            return Math.floor(this.basePrice * Math.pow(this.priceMultiplier, level));
+        }
+    },
+    {
+        id: 'yieldMultiplier',
+        name: 'Yield Amount',
+        description: 'Increases harvest yield by 10% per level',
+        basePrice: 600,
+        priceMultiplier: 1.6,
+        maxLevel: 10,
+        getPrice: function(level) {
+            return Math.floor(this.basePrice * Math.pow(this.priceMultiplier, level));
+        }
+    },
+    {
+        id: 'sellPrice',
+        name: 'Sell Price',
+        description: 'Increases selling price by 10% per level',
+        basePrice: 750,
+        priceMultiplier: 1.7,
+        maxLevel: 10,
+        getPrice: function(level) {
+            return Math.floor(this.basePrice * Math.pow(this.priceMultiplier, level));
+        }
+    },
+    {
+        id: 'strainQuality',
+        name: 'Strain Quality',
+        description: 'Improves the quality of all strains by 5% per level',
+        basePrice: 1000,
+        priceMultiplier: 1.8,
+        maxLevel: 5,
+        getPrice: function(level) {
+            return Math.floor(this.basePrice * Math.pow(this.priceMultiplier, level));
+        }
+    },
+    {
+        id: 'autoHarvest',
+        name: 'Auto Harvest',
+        description: 'Automatically harvests plants when ready',
+        basePrice: 5000,
+        priceMultiplier: 2.0,
+        maxLevel: 1,
+        getPrice: function(level) {
+            return Math.floor(this.basePrice * Math.pow(this.priceMultiplier, level));
+        }
+    }
+];
+
+// Function to purchase research upgrade
+function purchaseResearch(gameState, researchId) {
+    const research = researchUpgrades.find(r => r.id === researchId);
+    if (!research) return { success: false, message: "Исследование не найдено" };
+    
+    const currentLevel = gameState.researchLevels[researchId] || 0;
+    
+    if (currentLevel >= research.maxLevel) {
+        return { success: false, message: "Максимальный уровень достигнут" };
+    }
+    
+    const cost = research.getPrice(currentLevel);
+    
+    if (gameState.research < cost) {
+        return { success: false, message: `Недостаточно исследовательских очков (нужно ${cost})` };
+    }
+    
+    // Purchase the upgrade
+    gameState.research -= cost;
+    gameState.researchLevels[researchId] = currentLevel + 1;
+    
+    // Apply special effects for new research types
+    if (researchId === 'strainQuality') {
+        applyStrainQualityBonus(gameState);
+    }
+    
+    return {
+        success: true,
+        message: `Успешно улучшено ${research.name} до уровня ${currentLevel + 1}`,
+        newLevel: currentLevel + 1
+    };
+}
+
+// Apply strain quality bonus
+function applyStrainQualityBonus(gameState) {
+    // This would be applied at runtime during yield and price calculations
+    // The actual implementation is in the modified harvest and sell functions
+}
+
+// =========== STRAIN BREEDING SYSTEM (SIMPLIFIED VERSION) ===========
+// This is a simpler version that doesn't require major code restructuring
+function createStrainBreedingSystem() {
+    // Add a button to the UI for accessing breeding
+    const actionButtons = document.querySelector('.character-screens');
+    if (actionButtons) {
+        const breedingBtn = document.createElement('button');
+        breedingBtn.className = 'breeding-button';
+        breedingBtn.textContent = '🧬 Breed Strains';
+        breedingBtn.style.position = 'fixed';
+        breedingBtn.style.bottom = '70px';
+        breedingBtn.style.right = '10px';
+        breedingBtn.style.backgroundColor = '#9c27b0';
+        breedingBtn.style.color = 'white';
+        breedingBtn.style.padding = '8px 12px';
+        breedingBtn.style.borderRadius = '8px';
+        breedingBtn.style.border = 'none';
+        breedingBtn.style.zIndex = '100';
+        breedingBtn.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+        
+        breedingBtn.addEventListener('click', () => {
+            openBreedingModal();
+        });
+        
+        document.body.appendChild(breedingBtn);
+    }
+}
+
+// Function to open breeding modal - simplified version
+function openBreedingModal() {
+    // Check if player has at least 2 strains
+    if (gameState.unlockedStrains.length < 2) {
+        showNotification('Breeding Locked', 'You need at least 2 strains to start breeding', 'warning');
+        return;
+    }
+    
+    showNotification('Strain Breeding', 'Breeding feature will be available in the next update!', 'info');
+    
+    // In a full implementation, this would open a modal for selecting two parent strains
+    // and creating a new hybrid with combined properties
+}
+
+// =========== DAILY REWARDS SYSTEM ===========
+function initDailyRewards(gameState) {
+    if (!gameState.dailyRewards) {
+        gameState.dailyRewards = {
+            lastClaimDate: null,
+            streak: 0,
+            maxStreak: 0
+        };
+    }
+}
+
+function checkDailyReward(gameState) {
+    initDailyRewards(gameState);
+    
+    const today = new Date().toDateString();
+    
+    // If never claimed or claimed on a different day
+    if (!gameState.dailyRewards.lastClaimDate || gameState.dailyRewards.lastClaimDate !== today) {
+        // Check if this is consecutive day
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayString = yesterday.toDateString();
+        
+        if (gameState.dailyRewards.lastClaimDate === yesterdayString) {
+            // Consecutive day
+            gameState.dailyRewards.streak++;
+        } else {
+            // Streak broken
+            gameState.dailyRewards.streak = 1;
+        }
+        
+        // Update max streak
+        if (gameState.dailyRewards.streak > gameState.dailyRewards.maxStreak) {
+            gameState.dailyRewards.maxStreak = gameState.dailyRewards.streak;
+        }
+        
+        // Calculate reward based on streak
+        let reward = 100 * Math.min(gameState.dailyRewards.streak, 7);
+        
+        // Apply reward
+        gameState.coins += reward;
+        
+        // Update last claim date
+        gameState.dailyRewards.lastClaimDate = today;
+        
+        return {
+            available: true,
+            claimed: true,
+            streak: gameState.dailyRewards.streak,
+            reward: reward
+        };
+    }
+    
+    return {
+        available: false,
+        claimed: false,
+        streak: gameState.dailyRewards.streak
+    };
+}
+
+// Function to show daily reward on game start
+function showDailyRewardPopup(result) {
+    if (result.claimed) {
+        showNotification(
+            'Daily Reward!', 
+            `Day ${result.streak}: You received ${result.reward} coins!`, 
+            'success'
+        );
+    }
+}
+
+// =========== OFFLINE PROGRESSION ===========
+function calculateOfflineProgress(gameState) {
+    const now = Date.now();
+    const timeSinceLastPlay = (now - gameState.lastUpdateTime) / 1000; // in seconds
+    
+    // Only apply offline progress if the player was away for at least 5 minutes
+    if (timeSinceLastPlay < 300) return false;
+    
+    // Cap offline progress at 24 hours
+    const cappedTime = Math.min(timeSinceLastPlay, 86400);
+    
+    let totalEarned = 0;
+    let totalHarvested = 0;
+    
+    // Calculate progress for each character
+    gameState.characterData.forEach(character => {
+        if (!character.unlocked) return;
+        
+        // Skip if not growing
+        if (!character.progress.isGrowing && character.progress.grow < 0.01) return;
+        
+        const strain = getStrainById(character.currentStrain);
+        if (!strain) return;
+        
+        // Calculate how many full growth cycles could be completed
+        const growSpeed = character.growSpeed * (1 + gameState.researchLevels.growSpeed * 0.1);
+        const growTime = strain.growTime / 1000; // convert to seconds
+        const cycleTime = growTime / growSpeed;
+        
+        // Determine how much progress was already made
+        let remainingFirstCycle = 0;
+        if (character.progress.isGrowing && character.progress.grow < 1) {
+            remainingFirstCycle = (1 - character.progress.grow) * cycleTime;
+        }
+        
+        // Calculate how many full cycles were completed
+        let availableTime = cappedTime;
+        let cycles = 0;
+        
+        // Complete the first cycle if in progress
+        if (remainingFirstCycle > 0) {
+            if (availableTime >= remainingFirstCycle) {
+                availableTime -= remainingFirstCycle;
+                cycles += 1;
+                
+                // Auto-harvest if researched
+                if (gameState.researchLevels.autoHarvest && gameState.researchLevels.autoHarvest > 0) {
+                    // Calculate yield
+                    const yieldMultiplier = character.yieldMultiplier * (1 + gameState.researchLevels.yieldMultiplier * 0.1);
+                    const strainModifier = strain.yieldModifier;
+                    const qualityBonus = 1 + (gameState.researchLevels.strainQuality || 0) * 0.05;
+                    const harvestAmount = 10 * yieldMultiplier * strainModifier * qualityBonus;
+                    
+                    totalHarvested += harvestAmount;
+                    
+                    // Auto-sell if inventory gets too large (simplified)
+                    const sellPrice = strain.basePrice * (1 + gameState.researchLevels.sellPrice * 0.1);
+                    totalEarned += harvestAmount * sellPrice;
+                }
+            } else {
+                // Not enough time to complete the cycle
+                character.progress.grow += (availableTime / cycleTime);
+                availableTime = 0;
+            }
+        }
+        
+        // Complete additional cycles
+        if (availableTime > 0 && gameState.researchLevels.autoHarvest && gameState.researchLevels.autoHarvest > 0) {
+            const additionalCycles = Math.floor(availableTime / cycleTime);
+            cycles += additionalCycles;
+            
+            if (additionalCycles > 0) {
+                // Calculate yields for additional cycles
+                const yieldMultiplier = character.yieldMultiplier * (1 + gameState.researchLevels.yieldMultiplier * 0.1);
+                const strainModifier = strain.yieldModifier;
+                const qualityBonus = 1 + (gameState.researchLevels.strainQuality || 0) * 0.05;
+                const harvestAmount = additionalCycles * 10 * yieldMultiplier * strainModifier * qualityBonus;
+                
+                totalHarvested += harvestAmount;
+                
+                // Auto-sell
+                const sellPrice = strain.basePrice * (1 + gameState.researchLevels.sellPrice * 0.1);
+                totalEarned += harvestAmount * sellPrice;
+                
+                // Update remaining time and progress
+                availableTime -= additionalCycles * cycleTime;
+                character.progress.grow = availableTime / cycleTime;
+                character.progress.isGrowing = character.progress.grow > 0 && character.progress.grow < 1;
+            }
+        }
+    });
+    
+    // Apply offline rewards
+    if (totalEarned > 0 || totalHarvested > 0) {
+        gameState.coins += totalEarned;
+        gameState.totalHarvested += totalHarvested;
+        gameState.totalSold += totalHarvested;
+        
+        const hoursAway = Math.floor(cappedTime / 3600);
+        const minutesAway = Math.floor((cappedTime % 3600) / 60);
+        
+        return {
+            timeAway: `${hoursAway}h ${minutesAway}m`,
+            coinsEarned: totalEarned,
+            weedHarvested: totalHarvested
+        };
+    }
+    
+    return false;
+}
+
+// Show offline progress popup
+function showOfflineProgressPopup(progress) {
+    if (!progress) return;
+    
+    tg.showPopup({
+        title: 'Welcome Back!',
+        message: `While you were away (${progress.timeAway}):\n\n` +
+                 `• Harvested: ${progress.weedHarvested.toFixed(1)} units\n` +
+                 `• Earned: $${progress.coinsEarned.toFixed(1)}`,
+        buttons: [{ type: 'ok' }]
+    });
+}
+
+// =========== UI FOR STATS & ACHIEVEMENTS ===========
+// Create a button for stats and achievements
+function createStatsButton() {
+    const button = document.createElement('button');
+    button.innerText = '📊 Stats';
+    button.className = 'stats-button';
+    button.style.position = 'fixed';
+    button.style.top = '70px';
+    button.style.right = '10px';
+    button.style.backgroundColor = '#0288d1';
+    button.style.color = 'white';
+    button.style.padding = '8px 12px';
+    button.style.borderRadius = '8px';
+    button.style.border = 'none';
+    button.style.zIndex = '100';
+    button.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+    
+    button.addEventListener('click', openStatsModal);
+    
+    document.body.appendChild(button);
+}
+
+// Create HTML for the stats modal
+function createStatsModal() {
+    const modal = document.createElement('div');
+    modal.id = 'statsModal';
+    modal.className = 'strain-modal'; // Reuse the strain modal styles
+    
+    modal.innerHTML = `
+        <div class="strain-modal-content" style="max-height: 80vh; overflow-y: auto;">
+            <div class="strain-modal-header">
+                <h2>Statistics & Achievements</h2>
+                <button class="strain-modal-close" onclick="closeStatsModal()">&times;</button>
+            </div>
+            <div class="strain-modal-body">
+                <div class="stats-tabs">
+                    <button class="stats-tab active" onclick="switchStatsTab('stats')">Statistics</button>
+                    <button class="stats-tab" onclick="switchStatsTab('achievements')">Achievements</button>
+                    <button class="stats-tab" onclick="switchStatsTab('research')">Research</button>
+                </div>
+                
+                <div class="stats-tab-content active" id="stats-tab">
+                    <!-- Will be filled dynamically -->
+                </div>
+                
+                <div class="stats-tab-content" id="achievements-tab">
+                    <!-- Will be filled dynamically -->
+                </div>
+                
+                <div class="stats-tab-content" id="research-tab">
+                    <!-- Will be filled dynamically -->
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add styles for the tabs
+    const style = document.createElement('style');
+    style.textContent = `
+        .stats-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 15px;
+        }
+        .stats-tab {
+            padding: 8px 12px;
+            background: none;
+            border: none;
+            color: var(--light);
+            cursor: pointer;
+            opacity: 0.7;
+            transition: all 0.3s;
+        }
+        .stats-tab.active {
+            opacity: 1;
+            border-bottom: 2px solid var(--primary-light);
+        }
+        .stats-tab-content {
+            display: none;
+        }
+        .stats-tab-content.active {
+            display: block;
+        }
+        .achievement-card {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .achievement-icon {
+            font-size: 2rem;
+            margin-right: 15px;
+            opacity: 0.7;
+        }
+        .achievement-info {
+            flex: 1;
+        }
+        .achievement-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .achievement-description {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        .achievement-reward {
+            background: var(--dark);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        .achievement-card.unlocked {
+            background: rgba(67, 160, 71, 0.2);
+        }
+        .achievement-card.unlocked .achievement-icon {
+            opacity: 1;
+        }
+        .stat-group {
+            margin-bottom: 15px;
+        }
+        .stat-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary-light);
+        }
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .stat-label {
+            opacity: 0.8;
+        }
+        .stat-value {
+            font-weight: 600;
+        }
+        .research-card {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        .research-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .research-name {
+            font-weight: 600;
+        }
+        .research-level {
+            background: var(--primary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        .research-description {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+        .research-progress {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .research-progress-fill {
+            height: 100%;
+            background: var(--primary-light);
+        }
+        .research-buy {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            width: 100%;
+        }
+        .research-buy:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+    `;
+    
+    document.head.appendChild(style);
+    document.body.appendChild(modal);
+}
+
+// Function to open stats modal
+function openStatsModal() {
+    const modal = document.getElementById('statsModal');
+    if (!modal) {
+        createStatsModal();
+        const newModal = document.getElementById('statsModal');
+        newModal.style.display = 'block';
+        setTimeout(() => {
+            newModal.classList.add('active');
+            updateStatsContent();
+        }, 10);
+    } else {
+        modal.style.display = 'block';
+        setTimeout(() => {
+            modal.classList.add('active');
+            updateStatsContent();
+        }, 10);
+    }
+}
+
+// Function to close stats modal
+function closeStatsModal() {
+    const modal = document.getElementById('statsModal');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+    }
+}
+
+// Function to switch tabs in stats modal
+function switchStatsTab(tabName) {
+    document.querySelectorAll('.stats-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.stats-tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    
+    document.querySelector(`.stats-tab[onclick="switchStatsTab('${tabName}')"]`).classList.add('active');
+    document.getElementById(`${tabName}-tab`).classList.add('active');
+    
+    updateStatsContent(tabName);
+}
+
+// Update stats content based on active tab
+function updateStatsContent(activeTab = 'stats') {
+    // Default to the currently active tab if none specified
+    if (!activeTab) {
+        activeTab = document.querySelector('.stats-tab.active').getAttribute('onclick').match(/'(.*?)'/)[1];
+    }
+    
+    switch (activeTab) {
+        case 'stats':
+            updateStatisticsTab();
+            break;
+        case 'achievements':
+            updateAchievementsTab();
+            break;
+        case 'research':
+            updateResearchTab();
+            break;
+    }
+}
+
+// Update statistics tab content
+function updateStatisticsTab() {
+    const statsTab = document.getElementById('stats-tab');
+    if (!statsTab) return;
+    
+    // Initialize statistics if they don't exist
+    if (!gameState.statistics) {
+        initStatistics(gameState);
+    }
+    
+    // Format playtime
+    const playtime = gameState.statistics.playTime;
+    const hours = Math.floor(playtime / 3600);
+    const minutes = Math.floor((playtime % 3600) / 60);
+    const seconds = Math.floor(playtime % 60);
+    
+    // Get most used strain
+    let favoriteStrain = 'None';
+    let maxUsage = 0;
+    for (const [strainId, usage] of Object.entries(gameState.statistics.strainsFavored || {})) {
+        if (usage > maxUsage) {
+            maxUsage = usage;
+            const strain = getStrainById(parseInt(strainId));
+            if (strain) {
+                favoriteStrain = strain.name;
+            }
+        }
+    }
+    
+    statsTab.innerHTML = `
+        <div class="stat-group">
+            <div class="stat-title">General</div>
+            <div class="stat-item">
+                <div class="stat-label">Started Playing</div>
+                <div class="stat-value">${new Date(gameState.statistics.startDate).toLocaleDateString()}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Play Time</div>
+                <div class="stat-value">${hours}h ${minutes}m ${seconds}s</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Characters Unlocked</div>
+                <div class="stat-value">${gameState.statistics.unlockedCharacters || 1}/${gameState.characterData.length}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Strains Unlocked</div>
+                <div class="stat-value">${gameState.statistics.unlockedStrains || 1}/${strainsData.length}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Achievements</div>
+                <div class="stat-value">${gameState.statistics.achievementsUnlocked || 0}/${achievements.length}</div>
+            </div>
+        </div>
+        
+        <div class="stat-group">
+            <div class="stat-title">Production</div>
+            <div class="stat-item">
+                <div class="stat-label">Total Harvests</div>
+                <div class="stat-value">${gameState.statistics.harvestCount || 0}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Total Weed Harvested</div>
+                <div class="stat-value">${gameState.totalHarvested.toFixed(1)} units</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Largest Harvest</div>
+                <div class="stat-value">${gameState.statistics.highestSingleHarvest.toFixed(1)} units</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Total Sales</div>
+                <div class="stat-value">${gameState.statistics.salesCount || 0}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Total Weed Sold</div>
+                <div class="stat-value">${gameState.totalSold.toFixed(1)} units</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Biggest Sale</div>
+                <div class="stat-value">$${gameState.statistics.highestSingleSale.toFixed(1)}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Favorite Strain</div>
+                <div class="stat-value">${favoriteStrain}</div>
+            </div>
+        </div>
+        
+        <div class="stat-group">
+            <div class="stat-title">Daily Rewards</div>
+            <div class="stat-item">
+                <div class="stat-label">Current Streak</div>
+                <div class="stat-value">${gameState.dailyRewards ? gameState.dailyRewards.streak : 0} days</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Longest Streak</div>
+                <div class="stat-value">${gameState.dailyRewards ? gameState.dailyRewards.maxStreak : 0} days</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Last Claimed</div>
+                <div class="stat-value">${gameState.dailyRewards && gameState.dailyRewards.lastClaimDate ? new Date(gameState.dailyRewards.lastClaimDate).toLocaleDateString() : 'Never'}</div>
+            </div>
+        </div>
+    `;
+}
+
+// Update achievements tab content
+function updateAchievementsTab() {
+    const achievementsTab = document.getElementById('achievements-tab');
+    if (!achievementsTab) return;
+    
+    if (!gameState.achievements) {
+        gameState.achievements = [...achievements];
+    }
+    
+    let html = '';
+    
+    gameState.achievements.forEach(achievement => {
+        html += `
+            <div class="achievement-card ${achievement.unlocked ? 'unlocked' : ''}">
+                <div class="achievement-icon">${achievement.icon}</div>
+                <div class="achievement-info">
+                    <div class="achievement-name">${achievement.name}</div>
+                    <div class="achievement-description">${achievement.description}</div>
+                </div>
+                <div class="achievement-reward">+${achievement.reward} 💰</div>
+            </div>
+        `;
+    });
+    
+    achievementsTab.innerHTML = html;
+}
+
+// Update research tab content
+function updateResearchTab() {
+    const researchTab = document.getElementById('research-tab');
+    if (!researchTab) return;
+    
+    let html = '';
+    
+    researchUpgrades.forEach(upgrade => {
+        const currentLevel = gameState.researchLevels[upgrade.id] || 0;
+        const nextCost = upgrade.getPrice(currentLevel);
+        const isMaxed = currentLevel >= upgrade.maxLevel;
+        const canAfford = gameState.research >= nextCost;
+        
+        html += `
+            <div class="research-card">
+                <div class="research-header">
+                    <div class="research-name">${upgrade.name}</div>
+                    <div class="research-level">Level ${currentLevel}/${upgrade.maxLevel}</div>
+                </div>
+                <div class="research-description">${upgrade.description}</div>
+                <div class="research-progress">
+                    <div class="research-progress-fill" style="width: ${(currentLevel / upgrade.maxLevel) * 100}%"></div>
+                </div>
+                <button 
+                    class="research-buy" 
+                    onclick="purchaseResearchUpgrade('${upgrade.id}')"
+                    ${isMaxed || !canAfford ? 'disabled' : ''}
+                >
+                    ${isMaxed ? 'MAXED' : `Upgrade (${nextCost} ⚗️)`}
+                </button>
+            </div>
+        `;
+    });
+    
+    researchTab.innerHTML = html;
+}
+
+// Function to handle research purchase from UI
+function purchaseResearchUpgrade(researchId) {
+    const result = purchaseResearch(gameState, researchId);
+    
+    if (result.success) {
+        showNotification('Research Upgraded', result.message, 'success');
+        updateResearchTab();
+        updateUI();
+    } else {
+        showNotification('Research Failed', result.message, 'error');
+    }
+}
+
+// =========== INTEGRATION WITH EXISTING CODE ===========
+
+// Modify harvestCrop to include new statistics and strain quality
+const originalHarvestCrop = harvestCrop;
+harvestCrop = function(gameState, characterId) {
+    const character = gameState.characterData.find(c => c.id === characterId);
+    
+    if (!character || !character.unlocked) {
+        return { success: false, message: "Персонаж недоступен" };
+    }
+    
+    if (character.progress.grow < 1 || character.progress.harvest >= 1) {
+        return { success: false, message: "Нечего собирать" };
+    }
+    
+    const strain = getStrainById(character.progress.strain || character.currentStrain);
+    const yieldMultiplier = character.yieldMultiplier * (1 + gameState.researchLevels.yieldMultiplier * 0.1);
+    
+    // Add strain quality bonus
+    const qualityBonus = 1 + (gameState.researchLevels.strainQuality || 0) * 0.05;
+    
+    // Рассчитываем количество с учетом модификатора сорта и качества
+    const baseAmount = 10;
+    const strainModifier = strain ? strain.yieldModifier : 1;
+    const harvestAmount = baseAmount * yieldMultiplier * strainModifier * qualityBonus;
+    
+    character.progress.harvest = 1;
+    character.progress.inventory += harvestAmount;
+    character.progress.inventoryStrain = character.progress.strain; // Сохраняем информацию о собранном сорте
+    gameState.totalHarvested += harvestAmount;
+    gameState.weed += harvestAmount;
+    
+    // Update statistics
+    updateStatistics(gameState, 'harvest', harvestAmount, strain ? strain.id : 1);
+    
+    // Check for achievements
+    const earnedAchievements = checkAchievements(gameState);
+    if (earnedAchievements.length > 0) {
+        earnedAchievements.forEach(achievement => {
+            updateStatistics(gameState, 'achievement');
+            showNotification('Achievement Unlocked!', `${achievement.name}: +${achievement.reward} coins`, 'success');
+        });
+    }
+    
+    return { 
+        success: true, 
+        message: `${character.name} собрал ${harvestAmount.toFixed(1)} единиц ${strain.name}!`,
+        harvestAmount: harvestAmount,
+        strain: strain
+    };
+};
+
+// Modify sellHarvest to include new statistics
+const originalSellHarvest = sellHarvest;
+sellHarvest = function(gameState, characterId) {
+    const character = gameState.characterData.find(c => c.id === characterId);
+    
+    if (!character || !character.unlocked) {
+        return { success: false, message: "Персонаж недоступен" };
+    }
+    
+    if (character.progress.inventory <= 0) {
+        return { success: false, message: "Нечего продавать" };
+    }
+    
+    const strain = getStrainById(character.progress.inventoryStrain || character.currentStrain);
+    const sellPriceMultiplier = 1 + gameState.researchLevels.sellPrice * 0.1;
+    
+    // Add strain quality bonus to sell price
+    const qualityBonus = 1 + (gameState.researchLevels.strainQuality || 0) * 0.05;
+    
+    // Рассчитываем цену с учетом базовой цены сорта и бонуса качества
+    const basePrice = strain ? strain.basePrice : 10;
+    const sellPrice = basePrice * sellPriceMultiplier * qualityBonus;
+    const revenue = character.progress.inventory * sellPrice;
+    
+    gameState.coins += revenue;
+    gameState.totalSold += character.progress.inventory;
+    
+    // Add some research points based on sale
+    gameState.research += revenue * 0.05; // 5% of revenue goes to research
+    
+    // Update statistics
+    updateStatistics(gameState, 'sell', revenue, strain ? strain.id : 1);
+    
+    // Check for achievements
+    const earnedAchievements = checkAchievements(gameState);
+    if (earnedAchievements.length > 0) {
+        earnedAchievements.forEach(achievement => {
+            updateStatistics(gameState, 'achievement');
+            showNotification('Achievement Unlocked!', `${achievement.name}: +${achievement.reward} coins`, 'success');
+        });
+    }
+    
+    // Чистим инвентарь
+    const soldAmount = character.progress.inventory;
+    character.progress.inventory = 0;
+    character.progress.grow = 0;
+    character.progress.isGrowing = false;
+    
+    return { 
+        success: true, 
+        message: `${character.name} продал ${soldAmount.toFixed(1)} единиц ${strain ? strain.name : 'шмали'} за $${revenue.toFixed(1)}!`,
+        revenue: revenue,
+        strain: strain
+    };
+};
+
+// Modify tryUnlockCharacter to include statistics
+const originalTryUnlockCharacter = tryUnlockCharacter;
+tryUnlockCharacter = function(characterId) {
+    const character = gameState.characterData.find(c => c.id === characterId);
+    
+    if (character && !character.unlocked && gameState.coins >= character.price) {
+        gameState.coins -= character.price;
+        character.unlocked = true;
+        
+        showNotification('Character Unlocked', `You unlocked ${character.name}!`, 'success');
+        
+        // Update statistics
+        updateStatistics(gameState, 'unlockCharacter');
+        
+        // Check for achievements
+        const earnedAchievements = checkAchievements(gameState);
+        if (earnedAchievements.length > 0) {
+            earnedAchievements.forEach(achievement => {
+                updateStatistics(gameState, 'achievement');
+                showNotification('Achievement Unlocked!', `${achievement.name}: +${achievement.reward} coins`, 'success');
+            });
+        }
+        
+        // Обновляем вкладки и экраны
+        createCharacterTabs();
+        createCharacterScreens();
+        
+        // Переключаемся на нового персонажа
+        switchCharacter(characterId);
+        
+        // Сохраняем прогресс
+        saveGame();
+    } else if (character && !character.unlocked) {
+        showNotification('Not Enough Coins', `You need ${character.price - gameState.coins} more coins to unlock ${character.name}.`, 'warning');
+    }
+};
+
+// Modify unlockStrain to include statistics
+const originalUnlockStrainClicked = unlockStrainClicked;
+unlockStrainClicked = function(strainId) {
+    const result = unlockStrain(gameState, strainId);
+    
+    if (result.success) {
+        showNotification('Сорт разблокирован', result.message, 'success');
+        updateStrainList();
+        updateSelectedStrain(strainId);
+        updateUI();
+        
+        // Update statistics
+        updateStatistics(gameState, 'unlockStrain');
+        
+        // Check for achievements
+        const earnedAchievements = checkAchievements(gameState);
+        if (earnedAchievements.length > 0) {
+            earnedAchievements.forEach(achievement => {
+                updateStatistics(gameState, 'achievement');
+                showNotification('Achievement Unlocked!', `${achievement.name}: +${achievement.reward} coins`, 'success');
+            });
+        }
+    } else {
+        showNotification('Ошибка', result.message, 'error');
+    }
+};
+
+// Modify startGrowing to include strain statistics
+const originalStartGrowing = startGrowing;
+startGrowing = function(gameState, characterId) {
+    const result = originalStartGrowing(gameState, characterId);
+    
+    if (result.success) {
+        // Update strain usage statistics
+        const character = gameState.characterData.find(c => c.id === characterId);
+        if (character) {
+            updateStatistics(gameState, 'growStrain', 0, character.currentStrain);
+        }
+    }
+    
+    return result;
+};
+
+// Modify initGame to include new features
+const originalInitGame = initGame;
+initGame = function() {
+    // Call the original function
+    originalInitGame();
+    
+    // Initialize statistics
+    initStatistics(gameState);
+    
+    // Check for daily rewards
+    const dailyRewardResult = checkDailyReward(gameState);
+    if (dailyRewardResult.claimed) {
+        showDailyRewardPopup(dailyRewardResult);
+    }
+    
+    // Calculate offline progress
+    const offlineProgress = calculateOfflineProgress(gameState);
+    if (offlineProgress) {
+        showOfflineProgressPopup(offlineProgress);
+    }
+    
+    // Create UI for stats and achievements
+    createStatsButton();
+    
+    // Create strain breeding system
+    createStrainBreedingSystem();
+    
+    // Show welcome notification for returning players
+    if (gameState.statistics && gameState.statistics.playTime > 300) { // If played for more than 5 minutes before
+        showNotification('Welcome Back!', 'Continue building your cannabis empire!', 'info');
+    }
+};
+
+
     </script>
 </body>
 </html>
