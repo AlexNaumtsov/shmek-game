@@ -742,53 +742,6 @@
         .growth-stage.active {
             background-color: var(--primary-light);
         }
-        
-        /* Стили для лаборатории */
-        .lab-screen {
-            padding: 20px;
-            text-align: center;
-        }
-        
-        .lab-title {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-        }
-        
-        .lab-subtitle {
-            font-size: 1rem;
-            opacity: 0.8;
-            margin-bottom: 25px;
-        }
-        
-        .lab-card {
-            background: var(--dark-800);
-            border-radius: var(--border-radius);
-            padding: 15px;
-            margin-bottom: 15px;
-            text-align: left;
-        }
-        
-        .lab-card-title {
-            font-size: 1.2rem;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .lab-card-icon {
-            font-size: 1.8rem;
-            margin-right: 10px;
-        }
-        
-        .lab-card-text {
-            margin-bottom: 15px;
-            line-height: 1.5;
-        }
-        
-        .lab-soon {
-            opacity: 0.6;
-            margin-top: 40px;
-        }
     </style>
 </head>
 <body>
@@ -1684,16 +1637,13 @@
             }
         }
         
-        // Функция для инициализации игры с лабораторией
+        // Инициализация игры
         function initGame() {
             // Пытаемся загрузить сохраненную игру
             loadGame();
             
             // Инициализируем систему сортов
             initStrainSystem();
-            
-            // Добавляем базовую вкладку лаборатории
-            addLaboratoryTab();
             
             // Обновляем UI
             updateUI();
@@ -1711,78 +1661,6 @@
             
             // Инициализируем lastUpdateTime
             gameState.lastUpdateTime = Date.now();
-            
-            // Добавляем исследования каждые 10 секунд
-            setInterval(function() {
-                gameState.research += 1;
-                updateUI();
-            }, 10000);
-        }
-        
-        // Добавление вкладки лаборатории
-        function addLaboratoryTab() {
-            // Добавляем простую вкладку лаборатории
-            const labTab = {
-                id: 'lab',
-                name: "Lab",
-                icon: "🧪",
-                type: "Laboratory"
-            };
-            
-            // Добавляем в список персонажей для простоты
-            const existingTab = gameState.characterData.find(c => c.id === 'lab');
-            if (!existingTab) {
-                gameState.characterData.push(labTab);
-            }
-        }
-        
-        // Функция для переключения на лабораторию
-        function showLaboratory() {
-            // Создаем контент лаборатории
-            const labScreen = document.querySelector('.character-screen[data-character-id="lab"]');
-            if (labScreen) {
-                labScreen.innerHTML = `
-                    <div class="lab-screen">
-                        <h2 class="lab-title">Исследовательская Лаборатория</h2>
-                        <p class="lab-subtitle">Исследуйте новые технологии выращивания и улучшайте ваши сорта</p>
-                        
-                        <div class="lab-card">
-                            <div class="lab-card-title">
-                                <span class="lab-card-icon">💡</span>
-                                Улучшенные лампы
-                            </div>
-                            <p class="lab-card-text">
-                                Современные LED лампы для выращивания увеличивают скорость роста на 20% и снижают затраты энергии.
-                            </p>
-                        </div>
-                        
-                        <div class="lab-card">
-                            <div class="lab-card-title">
-                                <span class="lab-card-icon">🌬️</span>
-                                Система вентиляции
-                            </div>
-                            <p class="lab-card-text">
-                                Автоматизированная система вентиляции для оптимальной циркуляции воздуха. Увеличивает урожайность на 15%.
-                            </p>
-                        </div>
-                        
-                        <div class="lab-card">
-                            <div class="lab-card-title">
-                                <span class="lab-card-icon">🧬</span>
-                                Генетические исследования
-                            </div>
-                            <p class="lab-card-text">
-                                Изучение и модификация генов растений для создания улучшенных сортов с высокой производительностью.
-                            </p>
-                        </div>
-                        
-                        <p class="lab-soon">Скоро доступно больше исследований...</p>
-                    </div>
-                `;
-                
-                // Скрываем основную кнопку на экране лаборатории
-                customMainButton.style.display = 'none';
-            }
         }
         
         // Обновление игры (вызывается каждую секунду)
@@ -1830,28 +1708,6 @@
             tabsContainer.innerHTML = '';
             
             gameState.characterData.forEach(character => {
-                // Проверяем, если это лаборатория
-                if (character.id === 'lab') {
-                    const tab = document.createElement('div');
-                    tab.className = `character-tab ${character.id === gameState.activeCharacter ? 'active' : ''}`;
-                    tab.dataset.characterId = character.id;
-                    
-                    tab.innerHTML = `
-                        <div class="character-icon">${character.icon}</div>
-                        <div class="character-name">${character.name}</div>
-                    `;
-                    
-                    tab.addEventListener('click', () => {
-                        // Активируем вкладку лаборатории
-                        switchCharacter('lab');
-                        showLaboratory();
-                    });
-                    
-                    tabsContainer.appendChild(tab);
-                    return;
-                }
-                
-                // Обычный персонаж
                 const tab = document.createElement('div');
                 tab.className = `character-tab ${character.unlocked ? '' : 'locked'} ${character.id === gameState.activeCharacter ? 'active' : ''}`;
                 tab.dataset.characterId = character.id;
@@ -1879,22 +1735,6 @@
             screensContainer.innerHTML = '';
             
             gameState.characterData.forEach(character => {
-                // Если это лаборатория, создаем пустой экран (контент добавим позже)
-                if (character.id === 'lab') {
-                    const screen = document.createElement('div');
-                    screen.className = `character-screen ${character.id === gameState.activeCharacter ? 'active' : ''}`;
-                    screen.dataset.characterId = character.id;
-                    screensContainer.appendChild(screen);
-                    
-                    // Если лаборатория активна, показываем её содержимое
-                    if (character.id === gameState.activeCharacter) {
-                        showLaboratory();
-                    }
-                    
-                    return;
-                }
-                
-                // Обычный персонаж
                 const screen = document.createElement('div');
                 screen.className = `character-screen ${character.id === gameState.activeCharacter ? 'active' : ''}`;
                 screen.dataset.characterId = character.id;
@@ -2016,36 +1856,34 @@
             document.getElementById('prestige').textContent = Math.floor(gameState.prestige);
             
             // Обновляем прогресс-бары и кнопки на активном экране
-            if (typeof gameState.activeCharacter === 'number') { // Только для числовых ID (персонажи)
-                const activeCharacter = gameState.characterData.find(c => c.id === gameState.activeCharacter);
-                if (activeCharacter && activeCharacter.unlocked) {
-                    const activeScreen = document.querySelector(`.character-screen[data-character-id="${gameState.activeCharacter}"]`);
-                    if (activeScreen) {
-                        // Обновляем прогресс-бары
-                        const growBar = activeScreen.querySelector('.progress-bar-fill:nth-of-type(1)');
-                        if (growBar) growBar.style.width = `${activeCharacter.progress.grow * 100}%`;
-                        
-                        const harvestBar = activeScreen.querySelector('.progress-bar-fill:nth-of-type(2)');
-                        if (harvestBar) harvestBar.style.width = `${activeCharacter.progress.harvest * 100}%`;
-                        
-                        // Обновляем кнопки
-                        const growBtn = activeScreen.querySelector('.action-btn.grow');
-                        if (growBtn) {
-                            growBtn.disabled = activeCharacter.progress.grow >= 1 || activeCharacter.progress.isGrowing;
-                            const strain = getStrainById(activeCharacter.currentStrain);
-                            growBtn.textContent = activeCharacter.progress.isGrowing ? `Растет ${strain ? strain.name : '...'}` : 'Grow';
-                        }
-                        
-                        const harvestBtn = activeScreen.querySelector('.action-btn.harvest');
-                        if (harvestBtn) harvestBtn.disabled = activeCharacter.progress.grow < 1 || activeCharacter.progress.harvest >= 1;
-                        
-                        const sellBtn = activeScreen.querySelector('.action-btn.sell');
-                        if (sellBtn) sellBtn.disabled = activeCharacter.progress.inventory <= 0;
-                        
-                        // Обновляем информацию о персонаже
-                        const inventoryValue = activeScreen.querySelector('.character-stat:nth-child(4) .stat-value');
-                        if (inventoryValue) inventoryValue.textContent = `${activeCharacter.progress.inventory.toFixed(1)} units`;
+            const activeCharacter = gameState.characterData.find(c => c.id === gameState.activeCharacter);
+            if (activeCharacter && activeCharacter.unlocked) {
+                const activeScreen = document.querySelector(`.character-screen[data-character-id="${gameState.activeCharacter}"]`);
+                if (activeScreen) {
+                    // Обновляем прогресс-бары
+                    const growBar = activeScreen.querySelector('.progress-bar-fill:nth-of-type(1)');
+                    if (growBar) growBar.style.width = `${activeCharacter.progress.grow * 100}%`;
+                    
+                    const harvestBar = activeScreen.querySelector('.progress-bar-fill:nth-of-type(2)');
+                    if (harvestBar) harvestBar.style.width = `${activeCharacter.progress.harvest * 100}%`;
+                    
+                    // Обновляем кнопки
+                    const growBtn = activeScreen.querySelector('.action-btn.grow');
+                    if (growBtn) {
+                        growBtn.disabled = activeCharacter.progress.grow >= 1 || activeCharacter.progress.isGrowing;
+                        const strain = getStrainById(activeCharacter.currentStrain);
+                        growBtn.textContent = activeCharacter.progress.isGrowing ? `Растет ${strain ? strain.name : '...'}` : 'Grow';
                     }
+                    
+                    const harvestBtn = activeScreen.querySelector('.action-btn.harvest');
+                    if (harvestBtn) harvestBtn.disabled = activeCharacter.progress.grow < 1 || activeCharacter.progress.harvest >= 1;
+                    
+                    const sellBtn = activeScreen.querySelector('.action-btn.sell');
+                    if (sellBtn) sellBtn.disabled = activeCharacter.progress.inventory <= 0;
+                    
+                    // Обновляем информацию о персонаже
+                    const inventoryValue = activeScreen.querySelector('.character-stat:nth-child(4) .stat-value');
+                    if (inventoryValue) inventoryValue.textContent = `${activeCharacter.progress.inventory.toFixed(1)} units`;
                 }
             }
         }
@@ -2057,23 +1895,17 @@
             // Обновляем вкладки
             const characterTabs = document.querySelectorAll('.character-tab');
             characterTabs.forEach(tab => {
-                tab.classList.toggle('active', tab.dataset.characterId == characterId);
+                tab.classList.toggle('active', parseInt(tab.dataset.characterId) === characterId);
             });
             
             // Обновляем экраны
             const characterScreens = document.querySelectorAll('.character-screen');
             characterScreens.forEach(screen => {
-                screen.classList.toggle('active', screen.dataset.characterId == characterId);
+                screen.classList.toggle('active', parseInt(screen.dataset.characterId) === characterId);
             });
             
-            // Обновляем кнопку (только для обычных персонажей)
-            if (characterId !== 'lab') {
-                updateMainButton();
-            } else {
-                // Для лаборатории скрываем кнопку
-                customMainButton.style.display = 'none';
-                showLaboratory();
-            }
+            // Обновляем кнопку
+            updateMainButton();
         }
         
         // Попытка разблокировки персонажа
@@ -2154,7 +1986,7 @@
         function updateMainButton() {
             const character = gameState.characterData.find(c => c.id === gameState.activeCharacter);
             
-            if (!character || !character.unlocked || character.id === 'lab') {
+            if (!character || !character.unlocked) {
                 customMainButton.style.display = 'none';
                 currentButtonState.visible = false;
                 currentButtonState.type = "none";
@@ -2350,13 +2182,8 @@
                 
                 // Обновляем данные персонажей
                 if (parsedGame.characterData) {
-                    // Отфильтровываем только числовые ID (исключаем 'lab')
-                    const numericCharacters = parsedGame.characterData.filter(
-                        c => typeof c.id === 'number'
-                    );
-                    
                     // Производим глубокое копирование и добавляем недостающие свойства
-                    gameState.characterData = numericCharacters.map(loadedCharacter => {
+                    gameState.characterData = parsedGame.characterData.map(loadedCharacter => {
                         const baseCharacter = characterData.find(c => c.id === loadedCharacter.id) || characterData[0];
                         
                         // Создаем новый объект с базовыми свойствами
@@ -2390,9 +2217,6 @@
                         
                         return character;
                     });
-                    
-                    // Добавляем лабораторию
-                    addLaboratoryTab();
                 }
             } catch (error) {
                 console.error('Error parsing saved game:', error);
@@ -2431,61 +2255,6 @@
         
         // Запуск игры при загрузке страницы
         document.addEventListener('DOMContentLoaded', initGame);
-                                    character.progress.isGrowing = false;
-                                }
-                                if (character.progress.growStartTime === undefined) {
-                                    character.progress.growStartTime = 0;
-                                }
-                            } else {
-                                character[key] = loadedCharacter[key];
-                            }
-                        });
-                        
-                        // Добавляем свойство currentStrain, если оно отсутствует
-                        if (character.currentStrain === undefined) {
-                            character.currentStrain = 1;
-                        }
-                        
-                        return character;
-                    });
-                    
-                    // Добавляем лабораторию
-                    addLaboratoryTab();
-                }
-            } catch (error) {
-                console.error('Error parsing saved game:', error);
-            }
-        }
-        
-        // Обработчики событий Telegram
-        window.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden') {
-                saveGame();
-            } else {
-                // Обновляем UI и кнопку при возвращении в приложение
-                setTimeout(() => {
-                    updateUI();
-                    updateMainButton();
-                }, 100);
-            }
-        });
-        
-        window.addEventListener('beforeunload', saveGame);
-        
-        // Вспомогательные функции
-        function capitalize(string) {
-            return string.charAt(0).toUpperCase() + string.slice(1);
-        }
-
-        function formatTime(seconds) {
-            if (seconds < 60) {
-                return `${Math.round(seconds)}с`;
-            } else {
-                const minutes = Math.floor(seconds / 60);
-                const remainingSeconds = Math.round(seconds % 60);
-                return `${minutes}м ${remainingSeconds}с`;
-            }
-        }
-        
-        // Запуск игры при загрузке страницы
-        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
