@@ -602,9 +602,13 @@
         
         // Выращивание
         function grow() {
-    if (gameState.growProgress < 1) {
-        // Базовый прирост - 20% за клик
-        let growthAmount = 0.2;
+            if (gameState.growProgress < 1) {
+                // Увеличиваем прогресс выращивания
+                gameState.growProgress += 0.2; // 20% прогресса за нажатие
+                
+                if (gameState.growProgress > 1) {
+                    gameState.growProgress = 1;
+                }
                 
                 // Обновляем интерфейс
                 updateUI();
@@ -919,3 +923,4 @@
     </script>
 </body>
 </html>
+посмотри этот код, если есть какие предложения, внеси минимальные правки с минимальным количеством кода
