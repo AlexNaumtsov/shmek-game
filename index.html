@@ -984,6 +984,64 @@
             }
         ];
 
+        // Глобальные обработчики событий для модального окна
+        window.unlockStrainClicked = function(strainId) {
+            const result = unlockStrain(gameState, strainId);
+            
+            if (result.success) {
+                showNotification('Сорт разблокирован', result.message, 'success');
+                updateStrainList();
+                updateSelectedStrain(strainId);
+                updateUI();
+            } else {
+                showNotification('Ошибка', result.message, 'error');
+            }
+        }
+
+        window.selectStrainForCharacter = function(characterId, strainId) {
+            console.log("Selecting strain", strainId, "for character", characterId);
+            const result = changeCharacterStrain(gameState, characterId, strainId);
+            
+            if (result.success) {
+                showNotification('Сорт выбран', result.message, 'success');
+                closeStrainModal();
+                updateUI();
+                createCharacterScreens();
+            } else {
+                showNotification('Ошибка', result.message, 'error');
+            }
+        }
+
+        window.openStrainModal = function(characterId) {
+            console.log("Opening strain modal for character ID:", characterId);
+            activeCharacterForStrainSelect = characterId;
+            const character = gameState.characterData.find(c => c.id === characterId);
+            
+            // Если персонаж находится в процессе выращивания, нельзя менять сорт
+            if (character && character.progress.isGrowing) {
+                showNotification('Действие невозможно', 'Нельзя менять сорт во время выращивания', 'warning');
+                return;
+            }
+            
+            // Принудительно обновляем список сортов
+            updateStrainList();
+            
+            // Обновляем выбранный сорт
+            updateSelectedStrain(character ? character.currentStrain : 1);
+            
+            // Явно устанавливаем display: block для модального окна
+            const modal = document.getElementById('strainModal');
+            modal.style.display = 'block';
+            
+            // Добавляем класс active для анимации
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
+            
+            // Показываем уведомление для подтверждения
+            showNotification('Выбор сорта', 'Выберите сорт для выращивания', 'info');
+        }
+
         // Функция для получения информации о сорте по ID
         function getStrainById(strainId) {
             return strainsData.find(strain => strain.id === strainId);
@@ -1124,6 +1182,7 @@
             character.progress.harvest = 1;
             character.progress.inventory += harvestAmount;
             character.progress.inventoryStrain = character.progress.strain; // Сохраняем информацию о собранном сорте
+            character.progress.isGrowing = false; // Добавлено: сбрасываем флаг выращивания после сбора урожая
             gameState.totalHarvested += harvestAmount;
             gameState.weed += harvestAmount;
             
@@ -1351,37 +1410,6 @@
             updateStrainList();
         }
 
-        // Открыть модальное окно выбора сортов
-        function openStrainModal(characterId) {
-            console.log("Opening strain modal for character ID:", characterId);
-            activeCharacterForStrainSelect = characterId;
-            const character = gameState.characterData.find(c => c.id === characterId);
-            
-            // Если персонаж находится в процессе выращивания, нельзя менять сорт
-            if (character && character.progress.isGrowing) {
-                showNotification('Действие невозможно', 'Нельзя менять сорт во время выращивания', 'warning');
-                return;
-            }
-            
-            // Принудительно обновляем список сортов
-            updateStrainList();
-            
-            // Обновляем выбранный сорт
-            updateSelectedStrain(character ? character.currentStrain : 1);
-            
-            // Явно устанавливаем display: block для модального окна
-            const modal = document.getElementById('strainModal');
-            modal.style.display = 'block';
-            
-            // Добавляем класс active для анимации
-            setTimeout(() => {
-                modal.classList.add('active');
-            }, 10);
-            
-            // Показываем уведомление для подтверждения
-            showNotification('Выбор сорта', 'Выберите сорт для выращивания', 'info');
-        }
-
         // Закрытие модального окна
         function closeStrainModal() {
             const modal = document.getElementById('strainModal');
@@ -1417,16 +1445,27 @@
                     <div class="strain-type">${strain.type}</div>
                     <div class="strain-rarity ${strain.rarity}">${capitalize(strain.rarity)}</div>
                     ${!isUnlocked ? `
-                        <button class="strain-unlock-btn" onclick="unlockStrainClicked(${strain.id})" ${!canUnlock ? 'disabled' : ''}>
+                        <button class="strain-unlock-btn" ${!canUnlock ? 'disabled' : ''}>
                             Unlock $${strain.unlockCost}
                         </button>
                     ` : ''}
                 `;
                 
+                // Добавляем обработчики событий напрямую элементам
                 if (isUnlocked) {
-                    strainCard.addEventListener('click', () => {
+                    strainCard.addEventListener('click', function() {
                         updateSelectedStrain(strain.id);
                     });
+                }
+                
+                // Добавляем обработчик события для кнопки разблокировки
+                if (!isUnlocked) {
+                    const unlockBtn = strainCard.querySelector('.strain-unlock-btn');
+                    if (unlockBtn) {
+                        unlockBtn.addEventListener('click', function() {
+                            window.unlockStrainClicked(strain.id);
+                        });
+                    }
                 }
                 
                 strainListElement.appendChild(strainCard);
@@ -1435,6 +1474,8 @@
 
         // Обновление деталей выбранного сорта
         function updateSelectedStrain(strainId) {
+            console.log("Updating selected strain to:", strainId);
+            
             // Сначала удаляем активный класс со всех карточек
             document.querySelectorAll('.strain-card').forEach(card => {
                 card.classList.remove('active');
@@ -1468,6 +1509,11 @@
                 }
             }
             
+            // Создаем элемент кнопки отдельно
+            const selectBtnHtml = activeCharacterForStrainSelect && gameState.unlockedStrains.includes(strain.id) 
+                ? `<button class="strain-select-btn" id="selectStrainBtn">Выбрать этот сорт</button>` 
+                : '';
+            
             strainDetailsElement.innerHTML = `
                 <div class="strain-details-title">
                     <div class="strain-details-icon" style="color: ${strain.color}">${strain.icon}</div>
@@ -1494,42 +1540,23 @@
                     </div>
                 </div>
                 
-                ${activeCharacterForStrainSelect && gameState.unlockedStrains.includes(strain.id) ? `
-                    <button class="strain-select-btn" onclick="selectStrainForCharacter(${activeCharacterForStrainSelect}, ${strain.id})">
-                        Выбрать этот сорт
-                    </button>
-                ` : ''}
+                ${selectBtnHtml}
             `;
-        }
-
-        // Выбрать сорт для персонажа
-        function selectStrainForCharacter(characterId, strainId) {
-            const result = changeCharacterStrain(gameState, characterId, strainId);
             
-            if (result.success) {
-                showNotification('Сорт выбран', result.message, 'success');
-                closeStrainModal();
-                updateUI();
-                createCharacterScreens(); // Переcоздаем экраны, чтобы обновить сорт
-            } else {
-                showNotification('Ошибка', result.message, 'error');
+            // Добавляем обработчик события для кнопки выбора сорта
+            const selectBtn = document.getElementById('selectStrainBtn');
+            if (selectBtn) {
+                selectBtn.addEventListener('click', function() {
+                    console.log('Select button clicked', activeCharacterForStrainSelect, strainId);
+                    window.selectStrainForCharacter(activeCharacterForStrainSelect, strainId);
+                });
             }
         }
 
-        // Разблокировать сорт
-        function unlockStrainClicked(strainId) {
-            const result = unlockStrain(gameState, strainId);
-            
-            if (result.success) {
-                showNotification('Сорт разблокирован', result.message, 'success');
-                updateStrainList();
-                updateSelectedStrain(strainId);
-                updateUI(); // Обновляем интерфейс, чтобы отразить изменение монет
-            } else {
-                showNotification('Ошибка', result.message, 'error');
-            }
-        }
+        // Выбрать сорт для персонажа (функция перемещена в window)
 
+        // Разблокировать сорт (функция перемещена в window)
+        
         // Обновление экрана персонажа с информацией о текущем сорте
         function updateCharacterScreenWithStrain(character, activeScreen) {
             const strain = getStrainById(character.currentStrain);
@@ -1558,7 +1585,7 @@
                 
                 // Добавляем обработчик события напрямую
                 strainIndicator.addEventListener('click', function() {
-                    openStrainModal(character.id);
+                    window.openStrainModal(character.id);
                 });
                 
                 // Вставляем после character-stats
@@ -1572,7 +1599,7 @@
                 // Удаляем старый обработчик и добавляем новый
                 const newStrainIndicator = strainIndicator.cloneNode(true);
                 newStrainIndicator.addEventListener('click', function() {
-                    openStrainModal(character.id);
+                    window.openStrainModal(character.id);
                 });
                 strainIndicator.parentNode.replaceChild(newStrainIndicator, strainIndicator);
             }
@@ -1626,7 +1653,7 @@
                 selectButton.style.width = '100%';
                 
                 selectButton.addEventListener('click', function() {
-                    openStrainModal(character.id);
+                    window.openStrainModal(character.id);
                 });
                 
                 // Находим блок action-buttons и добавляем после него нашу кнопку
@@ -1931,6 +1958,9 @@
                 showNotification('Not Enough Coins', `You need ${character.price - gameState.coins} more coins to unlock ${character.name}.`, 'warning');
             }
         }
+
+        // Добавляем функцию в глобальную область видимости
+        window.tryUnlockCharacter = tryUnlockCharacter;
         
         // Выполнение действия (grow, harvest, sell)
         function performAction(action, characterId) {
@@ -1981,6 +2011,9 @@
                 createCharacterScreens();
             }
         }
+
+        // Добавляем функцию в глобальную область видимости
+        window.performAction = performAction;
         
         // Обновление кастомной кнопки
         function updateMainButton() {
